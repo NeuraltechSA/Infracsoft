@@ -20,6 +20,7 @@ internal static class FuenteEntityFactory
         return model.Tipo switch
         {
             FuenteTipo.FTP => FuenteFtpEntityFactory.Create(model),
+            FuenteTipo.Neuralsys => FuenteNeuralsysEntityFactory.Create(model),
             _ => throw new Exception("Tipo de fuente no soportado"),
         };
     }

@@ -9,6 +9,7 @@ sealed class FuenteTipoMapper
         return entity.GetType().Name switch
         {
             "FuenteFtp" => FuenteTipo.FTP,
+            "FuenteNeuralsys" => FuenteTipo.Neuralsys,
             _ => throw new Exception("Tipo de fuente desconocido"),
         };
     }

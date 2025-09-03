@@ -2,5 +2,6 @@ namespace Renombrado.Fuentes.Infrastructure.Persistence.EFCore.Enums;
 
 public enum FuenteTipo
 {
-    FTP
+    FTP = 1,
+    Neuralsys = 2
 }
