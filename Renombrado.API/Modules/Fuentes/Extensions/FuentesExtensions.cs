@@ -1,5 +1,4 @@
 ﻿using Renombrado.Fuentes.Application.CreateFuenteFtp;
-using Renombrado.API.Modules.Fuentes;
 using Renombrado.Fuentes.Domain.Contracts;
 using Renombrado.Fuentes.Infrastructure.Persistence.EFCore.Repositories;
 using Renombrado.API.Modules.Fuentes.Validators;
@@ -15,15 +14,22 @@ namespace Renombrado.API.Modules.Fuentes.Extensions
     {
         public static IServiceCollection UseFuentesModule(this IServiceCollection services)
         {
+            #region Services
             services.AddScoped<IFuenteRepository, FuenteRepository>();
             services.AddScoped<FuenteFinder>();
+            #endregion
+
+            #region UseCases
             services.AddScoped<UpdateFuenteFtpUseCase>();
             services.AddScoped<CreateFuenteFtpUseCase>();
             services.AddScoped<DeleteFuenteUseCase>();
+            #endregion
 
+            #region Validators
             services.AddScoped<IValidator<CreateFuenteRequest>, CreateFuenteFtpValidator>();
             services.AddScoped<IValidator<UpdateFuenteRequest>, UpdateFuenteFtpValidator>();
-            
+            #endregion
+
             return services;
         }
     }
