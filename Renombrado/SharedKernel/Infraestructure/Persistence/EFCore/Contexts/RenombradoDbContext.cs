@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Renombrado.Fuentes.Infrastructure.Persistence.EFCore.Models;
+using Renombrado.Presunciones.Infrastructure.Persistence.EFCore.Models;
 using SharedKernel.Domain.Contracts;
 using SharedKernel.Infraestructure.Persistence.EFCore.Models;
 using MassTransit;
@@ -11,6 +12,7 @@ namespace Renombrado.SharedKernel.Infraestructure.Persistence.EFCore.Contexts
     public class RenombradoDbContext : DbContext, IUnitOfWork
     {
         public DbSet<FuenteModel> Fuentes { get; set; }
+        public DbSet<PresuncionModel> Presunciones { get; set; }
 
         public RenombradoDbContext(DbContextOptions<RenombradoDbContext> options) : base(options)
         {

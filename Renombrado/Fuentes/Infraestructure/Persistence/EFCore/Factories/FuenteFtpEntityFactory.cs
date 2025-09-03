@@ -3,8 +3,18 @@ using Renombrado.Fuentes.Infrastructure.Persistence.EFCore.Models;
 using System.Text.Json;
 
 namespace Renombrado.Fuentes.Infrastructure.Persistence.EFCore.Factories;
-sealed class FuenteFtpFactory
+
+/// <summary>
+/// Factory específico para crear entidades FuenteFtp a partir de modelos de persistencia.
+/// Model → Entity (específico)
+/// </summary>
+internal sealed class FuenteFtpEntityFactory
 {
+    /// <summary>
+    /// Crea una entidad FuenteFtp a partir de un modelo de persistencia.
+    /// </summary>
+    /// <param name="model">Modelo de persistencia con configuración FTP en JSON</param>
+    /// <returns>Entidad FuenteFtp</returns>
     public static FuenteFtp Create(FuenteModel model)
     {
         var config = JsonSerializer.Deserialize<FtpConfigData>(model.Config);
@@ -28,6 +38,9 @@ sealed class FuenteFtpFactory
         }
     }
 
+    /// <summary>
+    /// Estructura de datos para deserializar la configuración FTP desde JSON.
+    /// </summary>
     private record FtpConfigData(
         string host,
         int port,

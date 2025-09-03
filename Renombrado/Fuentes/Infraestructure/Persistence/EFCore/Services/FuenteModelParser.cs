@@ -10,7 +10,7 @@ public class FuenteModelParser : IModelParser<Fuente, FuenteModel>
 {
     public Fuente ParseToEntity(FuenteModel model)
     {
-        return FuenteFactory.Create(model);
+        return FuenteEntityFactory.Create(model);
     }
 
     public FuenteModel ParseToModel(Fuente entity)

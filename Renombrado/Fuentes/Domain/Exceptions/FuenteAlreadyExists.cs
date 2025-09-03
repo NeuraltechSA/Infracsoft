@@ -1,8 +1,10 @@
+using SharedKernel.Domain.Exceptions;
+
 namespace Renombrado.Fuentes.Domain.Exceptions;
 
-public class FuenteAlreadyExists : Exception
+public sealed class FuenteAlreadyExistsException : DomainException
 {
-    public FuenteAlreadyExists(string id) : base($"Fuente con id {id} ya existe")
+    public FuenteAlreadyExistsException(string id) : base($"Fuente con id {id} ya existe")
     {
     }
 }
