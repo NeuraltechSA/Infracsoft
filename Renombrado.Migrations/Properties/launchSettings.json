@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Renombrado.Migrations": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
