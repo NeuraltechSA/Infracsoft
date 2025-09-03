@@ -7,12 +7,6 @@ namespace Renombrado.Presunciones.Domain.Criteria;
 
 public sealed class PresuncionCriteria : BaseCriteria
 {
-    public PresuncionCriteria(
-        FilterCollection? filters = null,
-        OrderCollection? orders = null,
-        int? limit = null,
-        int? offset = null)
-        : base(filters, orders, limit, offset)
-    {
-    }
+    public PresuncionCriteria(Filters filters, Orders orders, Pagination? pagination)
+    : base(filters, orders, pagination) { }
 }
