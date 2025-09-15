@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Infracsoft.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.5.2" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="SSH.NET" Version="2025.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Importacion.Domain\Importacion.Domain.csproj" />
+    <ProjectReference Include="..\SharedKernel.Domain\SharedKernel.Domain.csproj" />
+    <ProjectReference Include="..\SharedKernel.Infraestructure\SharedKernel.Infraestructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(for file in \"InvalidPresuncionFechaHoraException.cs\" \"InvalidPresuncionLugarException.cs\" \"InvalidPresuncionPatenteException.cs\" \"InvalidPresuncionVelocidadMaximaException.cs\" \"InvalidPresuncionVelocidadMedidaException.cs\" \"PresuncionAlreadyExistsException.cs\" \"PresuncionNotFoundException.cs\")",
+      "Bash(do mv \"C:\\Users\\Gabriel\\source\\repos\\Infracsoft\\Importacion.Domain\\Presunciones\\Domain\\Exceptions$file\" \"C:\\Users\\Gabriel\\source\\repos\\Infracsoft\\Importacion.Domain\\Presunciones\\Exceptions$file\")",
+      "Bash(done)",
+      "WebSearch"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
