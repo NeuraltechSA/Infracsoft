@@ -27,9 +27,9 @@ namespace Infracsoft.Importacion.Domain.Imagenes.Services
             string? path = null;
             try
             {
-                path = GeneratePath(id, namedStream.Name);
+                path = GeneratePath(id, namedStream.FullName);
                 await fileSource.Upload(namedStream, path);
-                var imagen = Imagen.Create(id, path, namedStream.Length, namedStream.Name, presuncionId);
+                var imagen = Imagen.Create(id, path, namedStream.Length, namedStream.FullName, presuncionId);
                 await repository.Create(imagen);
                 await eventBus.Publish(imagen.PullDomainEvents());
                 await unitOfWork.SaveChangesAsync();

@@ -8,7 +8,6 @@
     <RootNamespace>RenombradoOld.API</RootNamespace>
     <UserSecretsId>f5312772-80d0-4a74-b8fe-216b6f794bc5</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,7 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\RenombradoOld\RenombradoOld.csproj" />
     <ProjectReference Include="..\SharedKernel.Infraestructure\SharedKernel.Infraestructure.csproj" />
-    <ProjectReference Include="..\SharedKernel.Infrastructure\SharedKernel.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

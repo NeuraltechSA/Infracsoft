@@ -16,7 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\docker-compose.dcproj" />
     <ProjectReference Include="..\Importacion.Migrations\Importacion.Migrations.csproj" />
     <ProjectReference Include="..\Importacion.Worker\Importacion.Worker.csproj" />
     <ProjectReference Include="..\MailDev.Hosting\MailDev.Hosting.csproj" IsAspireProjectResource="false" />

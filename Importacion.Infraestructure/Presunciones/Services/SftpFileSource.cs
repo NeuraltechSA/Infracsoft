@@ -2,6 +2,7 @@
 using Infracsoft.Importacion.Infraestructure.Presunciones.Contracts;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
+using SharedKernel.Domain.Utilities;
 
 namespace Infracsoft.Importacion.Infraestructure.Presunciones.Services
 {
@@ -67,6 +68,21 @@ namespace Infracsoft.Importacion.Infraestructure.Presunciones.Services
         {
             //TODO: From env
             return new SftpClient("neuralsys.com.ar", "neuralsys_precarga", "yFy6K226Sh");
+        }
+
+        public Task<IEnumerable<string>> GetPresuncionesPaths()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IAsyncEnumerable<NamedStream> GetPresuncionFiles(string presuncionPath)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeletePresuncion(string presuncionPath)
+        {
+            throw new NotImplementedException();
         }
     }
 }

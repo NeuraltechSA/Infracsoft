@@ -25,12 +25,9 @@ public abstract class Presuncion : AggregateRoot
         FechaHora = fechaHora != null ? new PresuncionFechaHora(fechaHora.Value) : null;
         Lugar = new PresuncionLugar(lugar);
         Patente = new PresuncionPatente(patente);
+        //TODO: Update event
     }
 
-    public void Import(string id, string sourcePath, string tempStoreKey)
-    {
-        RecordDomainEvent(new PresuncionImportedEvent(id, sourcePath, tempStoreKey));
-    }
 
     public abstract void Delete();
 
