@@ -28,20 +28,20 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.StoreImported
         /// de fallo para activar la compensación.
         /// </summary>
         /// <param name="sourcePath">Ruta original de la presunción en la fuente.</param>
-        /// <param name="presuncionTempStoreKey">Clave del almacenamiento temporal.</param>
+        /// <param name="presuncionDestinationPath">Ruta de destino donde están los archivos temporales.</param>
         /// <param name="presuncionId">ID único de la presunción importada.</param>
         /// <returns>Task que representa la operación asíncrona.</returns>
         /// <exception cref="Exception">Se relanza cualquier excepción después de publicar el evento de fallo.</exception>
-        public async Task Execute(string sourcePath, string presuncionTempStoreKey, string presuncionId)
+        public async Task Execute(string sourcePath, string presuncionDestinationPath, string presuncionId)
         {
             try
             {
-                var images = _tempFileStore.GetPresuncionImages(presuncionTempStoreKey);
+                var images = _tempFileStore.GetPresuncionImages(presuncionDestinationPath);
                 await _fileStore.StoreImages(images, presuncionId);
 
                 await _eventBus.Publish(new PresuncionFilesStoredEvent(
                     presuncionId, 
-                    presuncionTempStoreKey, 
+                    presuncionDestinationPath, 
                     sourcePath)
                 );
             }
@@ -50,7 +50,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.StoreImported
                 await _eventBus.Publish(new PresuncionFilesStorageFailedEvent(
                     presuncionId,
                     sourcePath,
-                    presuncionTempStoreKey,
+                    presuncionDestinationPath,
                     ex.Message,
                     ex
                 ));

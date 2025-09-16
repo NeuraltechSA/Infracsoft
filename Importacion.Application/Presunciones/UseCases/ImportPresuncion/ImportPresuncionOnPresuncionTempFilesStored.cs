@@ -21,7 +21,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.ImportPresunc
         /// <returns>Task que representa la operación asíncrona.</returns>
         public async Task Consume(ConsumeContext<PresuncionTempFilesStoredEvent> context)
         {
-            await _useCase.Execute(context.Message.PresuncionSourcePath, context.Message.PresuncionTempStoreKey);
+            await _useCase.Execute(context.Message.PresuncionDestinationPath, context.Message.PresuncionSourcePath);
         }
     }
 }

@@ -31,6 +31,12 @@ public class NamedStream : Stream
     public string FullName { get; }
 
     /// <summary>
+    /// Obtiene el nombre del archivo asociado a este stream
+    /// </summary>
+    /// <value>El nombre del archivo</value>
+    public string Name => Path.GetFileName(FullName);
+
+    /// <summary>
     /// Inicializa una nueva instancia de la clase <see cref="NamedStream"/>.
     /// </summary>
     /// <param name="innerStream">El stream interno al cual se delegarán todas las operaciones.</param>

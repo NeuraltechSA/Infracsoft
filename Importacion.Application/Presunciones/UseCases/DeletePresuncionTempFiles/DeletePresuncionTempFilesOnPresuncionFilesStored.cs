@@ -15,13 +15,13 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.DeletePresunc
 
         /// <summary>
         /// Procesa el evento de archivos almacenados permanentemente.
-        /// Ejecuta el caso de uso de eliminación de archivos temporales con la clave de almacenamiento.
+        /// Ejecuta el caso de uso de eliminación de archivos temporales con la ruta de destino.
         /// </summary>
         /// <param name="context">Contexto del evento con los datos de la presunción.</param>
         /// <returns>Task que representa la operación asíncrona.</returns>
         public async Task Consume(ConsumeContext<PresuncionFilesStoredEvent> context)
         {
-            await _useCase.Execute(context.Message.TempStoreKey);
+            await _useCase.Execute(context.Message.DestinationPath);
         }
     }
 }

@@ -13,13 +13,13 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.DeletePresunc
 
         /// <summary>
         /// Ejecuta la eliminación de archivos temporales de una presunción.
-        /// Elimina todos los archivos asociados a la clave de almacenamiento temporal especificada.
+        /// Elimina todos los archivos asociados a la ruta de destino especificada.
         /// </summary>
-        /// <param name="presuncionTempStoreKey">Clave del almacenamiento temporal a limpiar.</param>
+        /// <param name="presuncionDestinationPath">Ruta de destino a limpiar.</param>
         /// <returns>Task que representa la operación asíncrona.</returns>
-        public async Task Execute(string presuncionTempStoreKey)
+        public async Task Execute(string presuncionDestinationPath)
         {
-            await _tempStore.DeletePresuncion(presuncionTempStoreKey);
+            await _tempStore.DeletePresuncion(presuncionDestinationPath);
         }
     }
 }

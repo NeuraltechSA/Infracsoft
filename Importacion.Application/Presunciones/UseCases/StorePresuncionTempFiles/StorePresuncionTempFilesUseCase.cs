@@ -22,21 +22,21 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.ParsePresunci
         /// <summary>
         /// Ejecuta el almacenamiento temporal de archivos de presunción.
         /// Descarga todos los archivos de la presunción desde la fuente y los almacena
-        /// temporalmente usando la ruta de la presunción como clave única.
+        /// temporalmente usando la ruta de la presunción como ruta de destino.
         /// </summary>
         /// <param name="presuncionSourcePath">Ruta de la presunción en la fuente.</param>
         /// <returns>Task que representa la operación asíncrona.</returns>
         public async Task Execute(string presuncionSourcePath)
         {
-            // Utilizo la ruta de la presuncion como clave unica del almacenamiento temporal
-            var presuncionTempStoreKey = presuncionSourcePath;
+            // Utilizo la ruta de la presuncion como ruta de destino del almacenamiento temporal
+            var presuncionDestinationPath = presuncionSourcePath;
             await foreach (var file in _fileSource.GetPresuncionFiles(presuncionSourcePath))
             {
                 using var stream = file;
-                await _fileStore.Store(presuncionTempStoreKey, stream);
+                await _fileStore.Store(presuncionDestinationPath, stream);
             }
 
-            await _eventBus.Publish(new PresuncionTempFilesStoredEvent(presuncionSourcePath, presuncionTempStoreKey));
+            await _eventBus.Publish(new PresuncionTempFilesStoredEvent(presuncionSourcePath, presuncionDestinationPath));
         }
     }
 }

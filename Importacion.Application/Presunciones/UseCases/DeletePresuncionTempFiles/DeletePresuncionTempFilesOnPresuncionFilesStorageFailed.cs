@@ -23,7 +23,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.DeletePresunc
         /// <returns>Task que representa la operación asíncrona.</returns>
         public async Task Consume(ConsumeContext<PresuncionFilesStorageFailedEvent> context)
         {
-            await _useCase.Execute(context.Message.PresuncionTempStoreKey);
+            await _useCase.Execute(context.Message.PresuncionDestinationPath);
         }
     }
 }

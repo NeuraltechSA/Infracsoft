@@ -8,11 +8,11 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Events
     /// y la eliminación de la presunción de la fuente original.
     /// </summary>
     /// <param name="PresuncionId">ID único de la presunción procesada.</param>
-    /// <param name="TempStoreKey">Clave del almacenamiento temporal que se debe limpiar.</param>
+    /// <param name="DestinationPath">Ruta de destino que se debe limpiar.</param>
     /// <param name="SourcePath">Ruta de la presunción en la fuente que se debe eliminar.</param>
     public record PresuncionFilesStoredEvent(
         string PresuncionId,
-        string TempStoreKey,
+        string DestinationPath,
         string SourcePath
     ) : DomainEvent
     {

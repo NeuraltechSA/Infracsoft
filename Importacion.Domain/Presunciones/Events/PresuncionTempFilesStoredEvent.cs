@@ -12,10 +12,10 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Events
     /// almacenados temporalmente. Este evento activa el proceso de importación de la presunción.
     /// </summary>
     /// <param name="PresuncionSourcePath">Ruta original de la presunción en la fuente.</param>
-    /// <param name="PresuncionTempStoreKey">Clave del almacenamiento temporal donde se guardaron los archivos.</param>
+    /// <param name="PresuncionDestinationPath">Ruta de destino donde se guardaron los archivos temporalmente.</param>
     public record PresuncionTempFilesStoredEvent(
         string PresuncionSourcePath,
-        string PresuncionTempStoreKey
+        string PresuncionDestinationPath
     ) : DomainEvent
     {
         /// <summary>

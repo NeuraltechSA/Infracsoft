@@ -24,7 +24,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.StoreImported
         {
             await _useCase.Execute(
                 context.Message.PresuncionSourcePath,
-                context.Message.PresuncionTempStoreKey,
+                context.Message.PresuncionDestinationPath,
                 context.Message.PresuncionId
             );
         }

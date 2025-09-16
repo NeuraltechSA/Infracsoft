@@ -40,14 +40,69 @@ public sealed class LocalTempFileStore : IPresuncionTempStore
         }
     }
 
-    public async Task Store(string presuncionKey, NamedStream stream)
+    public async Task Store(string destinationPath, NamedStream stream)
     {
-        var filePath = Path.Combine(TmpPath, presuncionKey);
+        var filePath = Path.Combine(TmpPath, destinationPath);
         EnsureDirectory(filePath);
         using var fileStream = new FileStream(filePath, FileMode.Create);
         await stream.CopyToAsync(fileStream);
     }
 
+    public Task DeletePresuncion(string destinationPath)
+    {
+        var filePath = Path.Combine(TmpPath, destinationPath);
+        if (Directory.Exists(filePath))
+        {
+            Directory.Delete(filePath, true);
+        }
+        return Task.CompletedTask;
+    }
+
+    public async Task<string> GetRawPresuncionData(string destinationPath)
+    {
+        var filePath = Path.Combine(TmpPath, destinationPath);
+        if (File.Exists(filePath))
+        {
+            return await File.ReadAllTextAsync(filePath);
+        }
+        return string.Empty;
+    }
+
+    public async IAsyncEnumerable<NamedStream> GetPresuncionImages(string destinationPath)
+    {
+        var directoryPath = Path.Combine(TmpPath, destinationPath);
+        if (Directory.Exists(directoryPath))
+        {
+            var imageFiles = Directory.GetFiles(directoryPath, "*.jpg")
+                .Concat(Directory.GetFiles(directoryPath, "*.jpeg"))
+                .Concat(Directory.GetFiles(directoryPath, "*.png"))
+                .Concat(Directory.GetFiles(directoryPath, "*.gif"))
+                .Concat(Directory.GetFiles(directoryPath, "*.bmp"));
+
+            foreach (var imageFile in imageFiles)
+            {
+                var fileStream = new FileStream(imageFile, FileMode.Open, FileAccess.Read);
+                yield return new NamedStream(fileStream, imageFile);
+            }
+        }
+        await Task.CompletedTask;
+    }
+
+    public async IAsyncEnumerable<NamedStream> GetPresuncionVideos(string destinationPath)
+    {
+        var directoryPath = Path.Combine(TmpPath, destinationPath);
+        if (Directory.Exists(directoryPath))
+        {
+            var videoFiles = Directory.GetFiles(directoryPath, "*.mkv");
+
+            foreach (var videoFile in videoFiles)
+            {
+                var fileStream = new FileStream(videoFile, FileMode.Open, FileAccess.Read);
+                yield return new NamedStream(fileStream, videoFile);
+            }
+        }
+        await Task.CompletedTask;
+    }
 
     /*
     public async Task<string> StorePresuncionFileAsync(byte[] content, string fileName)

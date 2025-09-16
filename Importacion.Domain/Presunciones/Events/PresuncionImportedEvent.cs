@@ -14,11 +14,11 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Events
     /// </summary>
     /// <param name="PresuncionId">ID único de la presunción importada.</param>
     /// <param name="PresuncionSourcePath">Ruta original de la presunción en la fuente.</param>
-    /// <param name="PresuncionTempStoreKey">Clave del almacenamiento temporal con los archivos de la presunción.</param>
+    /// <param name="PresuncionDestinationPath">Ruta de destino con los archivos de la presunción.</param>
     public record PresuncionImportedEvent(
         string PresuncionId,
         string PresuncionSourcePath,
-        string PresuncionTempStoreKey
+        string PresuncionDestinationPath
     ) : DomainEvent
     {
         /// <summary>

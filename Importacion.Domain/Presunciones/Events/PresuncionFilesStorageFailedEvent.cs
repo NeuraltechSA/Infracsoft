@@ -9,13 +9,13 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Events
     /// </summary>
     /// <param name="PresuncionId">ID único de la presunción que falló en el almacenamiento.</param>
     /// <param name="PresuncionSourcePath">Ruta original de la presunción en la fuente.</param>
-    /// <param name="PresuncionTempStoreKey">Clave del almacenamiento temporal que se debe limpiar.</param>
+    /// <param name="PresuncionDestinationPath">Ruta de destino que se debe limpiar.</param>
     /// <param name="ErrorMessage">Mensaje descriptivo del error que causó el fallo.</param>
     /// <param name="Exception">Excepción que causó el fallo en el almacenamiento.</param>
     public record PresuncionFilesStorageFailedEvent(
         string PresuncionId,
         string PresuncionSourcePath,
-        string PresuncionTempStoreKey,
+        string PresuncionDestinationPath,
         string ErrorMessage,
         Exception Exception
     ) : DomainEvent

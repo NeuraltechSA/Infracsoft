@@ -32,16 +32,16 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.ImportPresunc
         /// la persiste en la base de datos y publica el evento de importación exitosa.
         /// En caso de error, publica un evento de fallo para activar la compensación.
         /// </summary>
-        /// <param name="presuncionTempStoreKey">Clave del almacenamiento temporal donde están los archivos de la presunción.</param>
+        /// <param name="presuncionDestinationPath">Ruta de destino donde están los archivos de la presunción.</param>
         /// <param name="presuncionSourcePath">Ruta original de la presunción en la fuente.</param>
         /// <returns>Task que representa la operación asíncrona.</returns>
         /// <exception cref="Exception">Se relanza cualquier excepción después de publicar el evento de fallo.</exception>
-        public async Task Execute(string presuncionTempStoreKey, string presuncionSourcePath)
+        public async Task Execute(string presuncionDestinationPath, string presuncionSourcePath)
         {
             string? presuncionId = null;
             try
             {
-                var rawPresuncion = await _fileStore.GetRawPresuncionData(presuncionTempStoreKey);
+                var rawPresuncion = await _fileStore.GetRawPresuncionData(presuncionDestinationPath);
                 presuncionId = _guidGenerator.GenerateGuid().ToString();
                 var presuncion = await _parser.ParsePresuncion(presuncionId, rawPresuncion);
 
@@ -50,7 +50,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.ImportPresunc
                 await _eventBus.Publish(new PresuncionImportedEvent(
                     presuncionId,
                     presuncionSourcePath,
-                    presuncionTempStoreKey
+                    presuncionDestinationPath
                 ));
             }
             catch (Exception ex)
@@ -58,7 +58,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.UseCases.ImportPresunc
                 await _eventBus.Publish(new PresuncionImportFailedEvent(
                     presuncionId,
                     presuncionSourcePath,
-                    presuncionTempStoreKey,
+                    presuncionDestinationPath,
                     ex.Message,
                     ex
                 ));
