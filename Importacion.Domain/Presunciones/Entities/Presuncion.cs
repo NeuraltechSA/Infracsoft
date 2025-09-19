@@ -9,15 +9,15 @@ public abstract class Presuncion : AggregateRoot
 {
     public PresuncionId Id { get; }
     public PresuncionFechaHora? FechaHora { get; protected set; }
-    public PresuncionLugar Lugar { get; protected set; }
-    public PresuncionPatente Patente { get; protected set; }
+    public PresuncionLugar? Lugar { get; protected set; }
+    public PresuncionPatente? Patente { get; protected set; }
 
-    protected Presuncion(string id, DateTime? fechaHora, string lugar, string patente)
+    protected Presuncion(string id,string? lugar, string? patente = null, DateTime ? fechaHora = null)
     {
         Id = new PresuncionId(id);
         FechaHora = fechaHora != null ? new PresuncionFechaHora(fechaHora.Value) : null;
-        Lugar = new PresuncionLugar(lugar);
-        Patente = new PresuncionPatente(patente);
+        Lugar = lugar != null ? new PresuncionLugar(lugar) : null;
+        Patente = patente != null ? new PresuncionPatente(patente) : null;
     }
 
     public void Update(DateTime? fechaHora, string lugar, string patente)

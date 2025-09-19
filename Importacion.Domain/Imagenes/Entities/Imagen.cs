@@ -43,20 +43,6 @@ public class Imagen : AggregateRoot
             });
         return imagen;
     }
-    /*
-    public void Update(string ruta, float peso, string nombre)
-    {
-        Ruta = new ImagenRuta(ruta);
-        Peso = new ImagenPeso(peso);
-        Nombre = new ImagenNombre(nombre);
-        RecordDomainEvent(
-            new ImagenUpdatedDomainEvent{
-                ImagenId = Id.Value,
-                Ruta = ruta,
-                Peso = peso,
-                Nombre = nombre
-            });
-    }*/
 
     public void Delete()
     {

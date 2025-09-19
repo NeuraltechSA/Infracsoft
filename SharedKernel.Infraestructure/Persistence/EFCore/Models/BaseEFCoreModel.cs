@@ -14,6 +14,5 @@ public class BaseEFCoreModel
 
     public DateTime? UpdatedAt { get; set; }
 
-
-    
+    public BaseEFCoreModel() { }
 }

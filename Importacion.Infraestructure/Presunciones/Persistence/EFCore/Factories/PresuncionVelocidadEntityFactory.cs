@@ -18,12 +18,12 @@ internal sealed class PresuncionVelocidadEntityFactory
     {
         return new PresuncionVelocidad(
             model.Id.ToString(),
-            model.FechaHora,
-            model.Lugar,
-            model.Patente,
             model.ValorMedido!.Value,
             model.ValorMaximo!.Value,
-            model.Carril!.Value
+            model.Carril,
+            model.FechaHora,
+            model.Lugar,
+            model.Patente
         );
     }
 }

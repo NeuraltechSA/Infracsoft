@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using Infracsoft.Importacion.Domain.Presunciones.Events;
 using Infracsoft.Importacion.Domain.Presunciones.Events.Velocidad;
 using Infracsoft.Importacion.Domain.Presunciones.ValueObjects.Velocidad;
 
@@ -6,35 +9,36 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Entities;
 
 public sealed class PresuncionVelocidad : Presuncion
 {
+    public static readonly string DigimaxFilenameRegex = @"^(?<lugar>.*)#(?<fecha>.*)#(?<hora>.*)#(?<maxima>.*)#(?<medida>.*)(?:#(?<carril>.*))?\.zip$";
     public PresuncionVelocidadMedida VelocidadMedida { get; private set; }
     public PresuncionVelocidadMaxima VelocidadMaxima { get; private set; }
-    public PresuncionCarril Carril { get; private set; }
+    public PresuncionCarril? Carril { get; private set; }
 
     public PresuncionVelocidad(
         string id,
-        DateTime? fechaHora,
-        string lugar,
-        string patente,
         float velocidadMedida,
         float velocidadMaxima,
-        int carril) : base(id, fechaHora, lugar, patente)
+        int? carril,
+        DateTime? fechaHora,
+        string? lugar,
+        string? patente) : base(id, lugar, patente, fechaHora)
     {
         VelocidadMaxima = new PresuncionVelocidadMaxima(velocidadMaxima);
         VelocidadMedida = new PresuncionVelocidadMedida(velocidadMedida, velocidadMaxima);
-        Carril = new PresuncionCarril(carril);
+        Carril = carril.HasValue ? new PresuncionCarril(carril.Value) : null;
     }
 
     public static PresuncionVelocidad Create(
         string id,
-        DateTime? fechaHora,
-        string lugar,
-        string patente,
         float velocidadMedida,
         float velocidadMaxima,
-        int carril
+        int? carril,
+        DateTime? fechaHora,
+        string? lugar,
+        string? patente
     )
     {
-        var presuncion = new PresuncionVelocidad(id, fechaHora, lugar, patente, velocidadMedida, velocidadMaxima, carril);
+        var presuncion = new PresuncionVelocidad(id, velocidadMedida, velocidadMaxima, carril, fechaHora, lugar, patente);
         presuncion.RecordDomainEvent(
             new PresuncionVelocidadCreatedDomainEvent
             {
@@ -55,13 +59,13 @@ public sealed class PresuncionVelocidad : Presuncion
         string patente,
         float velocidadMedida,
         float velocidadMaxima,
-        int carril
+        int? carril
     )
     {
         Update(fechaHora, lugar, patente);
         VelocidadMaxima = new PresuncionVelocidadMaxima(velocidadMaxima);
         VelocidadMedida = new PresuncionVelocidadMedida(velocidadMedida, velocidadMaxima);
-        Carril = new PresuncionCarril(carril);
+        Carril = carril.HasValue ? new PresuncionCarril(carril.Value) : null;
         RecordDomainEvent(
             new PresuncionVelocidadUpdatedDomainEvent
             {
@@ -75,6 +79,42 @@ public sealed class PresuncionVelocidad : Presuncion
             });
     }
 
+    public static PresuncionVelocidad ImportFromDigimax(string id, string compressedFileSourcePath)
+    {
+            var match = EnsureValidDigimaxFilename(Path.GetFileName(compressedFileSourcePath));
+            var lugar = match.Groups["lugar"].Value;
+            var fecha = DateTime.ParseExact($"{match.Groups["fecha"].Value} {match.Groups["hora"].Value}", "dd-MM-yyyy HH.mm.ss", CultureInfo.InvariantCulture);
+            var maxima = float.Parse(match.Groups["maxima"].Value);
+            var medida = float.Parse(match.Groups["medida"].Value);            
+            var presuncion = new PresuncionVelocidad(id, medida, maxima, null, fecha, lugar, null);
+            
+            presuncion.RecordDomainEvent(
+                new PresuncionDigimaxImportedEvent
+                {
+                    PresuncionId = id,
+                    CompressedFileSourcePath = compressedFileSourcePath,
+                    FechaHora = fecha,
+                    Lugar = lugar,
+                    Patente = null,
+                    VelocidadMedida = medida,
+                    VelocidadMaxima = maxima,
+                    Carril = null
+                });
+
+            return presuncion;
+    }
+
+    private static Match EnsureValidDigimaxFilename(string filename)
+    {
+        var match = Regex.Match(filename, DigimaxFilenameRegex);
+        if (!match.Success)
+        {
+            //TODO: Custom exception
+            throw new InvalidOperationException($"Invalid filename: {filename}");
+        }
+        return match;
+    }
+
     public override void Delete()
     {
         RecordDomainEvent(
@@ -82,11 +122,11 @@ public sealed class PresuncionVelocidad : Presuncion
             {
                 PresuncionId = Id.Value,
                 FechaHora = FechaHora?.Value,
-                Lugar = Lugar.Value,
-                Patente = Patente.Value,
+                Lugar = Lugar?.Value,
+                Patente = Patente?.Value,
                 VelocidadMedida = VelocidadMedida.Value,
                 VelocidadMaxima = VelocidadMaxima.Value,
-                Carril = Carril.Value
+                Carril = Carril?.Value
             });
     }
 

@@ -1,88 +1,50 @@
-﻿using Infracsoft.Importacion.Domain.Presunciones.Contracts;
-using Infracsoft.Importacion.Infraestructure.Presunciones.Contracts;
+using Infracsoft.Importacion.Domain.Presunciones.Contracts;
 using Renci.SshNet;
-using Renci.SshNet.Sftp;
-using SharedKernel.Domain.Utilities;
 
-namespace Infracsoft.Importacion.Infraestructure.Presunciones.Services
+namespace Infracsoft.Importacion.Infraestructure.Presunciones.Services;
+
+public sealed class SftpFileSource : IPresuncionFileSource
 {
-    public sealed class SftpFileSource() : IPresuncionSource
+    private SftpClient GetClient()
     {
-        public async Task<IEnumerable<string>> GetPresuncionesPathsAsync()
-        {
-            using var client = GetClient();
-            client.Connect();
-            var files = await GetFilesRecursively(client, "/");
-            return files.Where(f => !f.IsDirectory && f.Name.EndsWith(".json")).Select(file => file.FullName);
-        }
+        //TODO: From env
+        return new SftpClient("neuralsys.com.ar",5379, "neuralsys_precarga", "yFy6K226Sh");
+    }
 
-        public async Task<IEnumerable<string>> GetPresuncionImagesPathsAsync(string presuncionPath)
-        {
-            using var client = GetClient();
-            client.Connect();
-            
-            var directory = Path.GetDirectoryName(presuncionPath);
-            var files = await GetFilesRecursively(client, directory ?? "/");
-            return files.Where(f => !f.IsDirectory && IsImageFile(f.Name)).Select(file => file.FullName);
-        }
+    public async Task Delete(string path)
+    {
+        using var client = GetClient();
+        await client.ConnectAsync(CancellationToken.None);
+        await client.DeleteAsync(path);
+    }
 
-        public async Task<byte[]> DownloadPresuncionFileAsync(string remotePath)
-        {
-            using var client = GetClient();
-            client.Connect();
-            
-            using var memoryStream = new MemoryStream();
-            await Task.Factory.FromAsync(client.BeginDownloadFile(remotePath, memoryStream), client.EndDownloadFile);
-            return memoryStream.ToArray();
-        }
+    public async Task<Stream> DownloadFile(string path)
+    {
+        using var client = GetClient();
+        await client.ConnectAsync(CancellationToken.None);
+        var stream = new MemoryStream();
+        await Task.Factory.FromAsync(client.BeginDownloadFile(path, stream), client.EndDownloadFile);
+        return stream;
+    }
 
-        public async Task<byte[]> DownloadPresuncionImageAsync(string remotePath)
-        {
-            using var client = GetClient();
-            client.Connect();
-            
-            using var memoryStream = new MemoryStream();
-            await Task.Factory.FromAsync(client.BeginDownloadFile(remotePath, memoryStream), client.EndDownloadFile);
-            return memoryStream.ToArray();
-        }
+    public async Task<IEnumerable<string>> GetAllFilePathsRecursive()
+    {
+        using var client = GetClient();
+        await client.ConnectAsync(CancellationToken.None);
+        return await GetFilePathsFromDirectory(client, "/files/precarga/PRUEBAS_IGNORAR/");
+    }
 
-        private bool IsImageFile(string fileName)
+    private static async Task<IEnumerable<string>> GetFilePathsFromDirectory(SftpClient client, string path)
+    {
+        var currentFiles = client.ListDirectoryAsync(path, CancellationToken.None);
+        var allFiles = new List<string>();
+        await foreach (var file in currentFiles)
         {
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return extension is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp";
-        }
+            if (file.Name is "." or "..") continue;
+            if (file.IsDirectory) allFiles.AddRange(await GetFilePathsFromDirectory(client, file.FullName));
 
-        private async Task<List<ISftpFile>> GetFilesRecursively(SftpClient client, string path)
-        {
-            var currentFiles = client.ListDirectoryAsync(path, CancellationToken.None); //TODO: Add CancellationToken
-            var totalFiles = new List<ISftpFile>();
-            await foreach (var file in currentFiles)
-            {
-                if (file.IsDirectory) totalFiles.AddRange(await GetFilesRecursively(client, file.FullName));
-                totalFiles.Add(file);
-            }
-            return totalFiles;
+            allFiles.Add(file.FullName);
         }
-
-        private SftpClient GetClient()
-        {
-            //TODO: From env
-            return new SftpClient("neuralsys.com.ar", "neuralsys_precarga", "yFy6K226Sh");
-        }
-
-        public Task<IEnumerable<string>> GetPresuncionesPaths()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IAsyncEnumerable<NamedStream> GetPresuncionFiles(string presuncionPath)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task DeletePresuncion(string presuncionPath)
-        {
-            throw new NotImplementedException();
-        }
+        return allFiles;
     }
 }

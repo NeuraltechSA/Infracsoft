@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RenombradoOld\RenombradoOld.csproj" />
     <ProjectReference Include="..\SharedKernel.Infraestructure\SharedKernel.Infraestructure.csproj" />
   </ItemGroup>
 

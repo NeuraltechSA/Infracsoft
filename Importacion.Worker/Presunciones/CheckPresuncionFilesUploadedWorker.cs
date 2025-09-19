@@ -1,23 +1,33 @@
-namespace Importacion.Worker.Presunciones;
+using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.CheckSourceDigimax;
 
-public class CheckPresuncionFilesUploadedWorker : BackgroundService
+namespace Infracsoft.Importacion.Worker.Presunciones;
+
+public class CheckPresuncionFilesUploadedWorker(
+    ILogger<CheckPresuncionFilesUploadedWorker> logger,
+    IServiceScopeFactory serviceScopeFactory
+) : BackgroundService
 {
-    private readonly ILogger<CheckPresuncionFilesUploadedWorker> _logger;
+    private readonly ILogger<CheckPresuncionFilesUploadedWorker> _logger = logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory = serviceScopeFactory;
 
-    public CheckPresuncionFilesUploadedWorker(ILogger<CheckPresuncionFilesUploadedWorker> logger)
-    {
-        _logger = logger;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
+        //while (!stoppingToken.IsCancellationRequested)
+        //{
             if (_logger.IsEnabled(LogLevel.Information))
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             }
-            await Task.Delay(1000, stoppingToken);
-        }
+
+
+            //     private readonly CheckPresuncionesOnSourceDigimaxUseCase _checkPresuncionesOnSourceDigimaxUseCase = checkPresuncionesOnSourceDigimaxUseCase;
+
+            using var scope = _serviceScopeFactory.CreateScope();
+            var checkPresuncionesOnSourceDigimaxUseCase = scope.ServiceProvider.GetRequiredService<CheckSourceDigimaxUseCase>();
+            await checkPresuncionesOnSourceDigimaxUseCase.Execute();
+
+            //await Task.Delay(1000, stoppingToken);
+        //}
     }
 }

@@ -21,12 +21,12 @@ internal sealed class PresuncionVelocidadModelFactory
         {
             Id = new Guid(entity.Id.Value),
             FechaHora = entity.FechaHora?.Value,
-            Lugar = entity.Lugar.Value,
-            Patente = entity.Patente.Value,
+            Lugar = entity.Lugar?.Value,
+            Patente = entity.Patente?.Value,
             TipoInfraccion = TipoPresuncion.Velocidad,
             ValorMedido = entity.VelocidadMedida.Value,
             ValorMaximo = entity.VelocidadMaxima.Value,
-            Carril = entity.Carril.Value
+            Carril = entity.Carril?.Value
         };
     }
 }

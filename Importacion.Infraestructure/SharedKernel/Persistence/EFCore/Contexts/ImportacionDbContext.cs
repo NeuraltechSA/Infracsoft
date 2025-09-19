@@ -3,6 +3,7 @@ using Infracsoft.Importacion.Infraestructure.Presunciones.Persistence.EFCore.Mod
 using SharedKernel.Domain.Contracts;
 using MassTransit;
 using SharedKernel.Infraestructure.Persistence.EFCore.Services;
+using Infracsoft.Importacion.Infraestructure.Imagenes.Persistence.EFCore.Models;
 
 
 namespace Infracsoft.Importacion.Infraestructure.SharedKernel.Persistence.EFCore.Contexts;
@@ -10,6 +11,7 @@ namespace Infracsoft.Importacion.Infraestructure.SharedKernel.Persistence.EFCore
 public class ImportacionDbContext : DbContext, IUnitOfWork
 {
     public DbSet<PresuncionModel> Presunciones { get; set; }
+    public DbSet<ImagenModel> Imagenes { get; set; }
 
     public ImportacionDbContext(DbContextOptions<ImportacionDbContext> options) : base(options)
     {
