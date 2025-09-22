@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Imagenes\UseCases\" />
+    <Folder Include="Imagenes\UseCases\DeleteImagen\" />
   </ItemGroup>
 
   <ItemGroup>

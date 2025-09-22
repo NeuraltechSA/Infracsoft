@@ -12,6 +12,7 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Contracts
         public Task<IEnumerable<string>> GetFilePathsFromFolder(string directoryPath);
         public Task Store(string destinationPath, Stream stream);
         public Task<Stream> DownloadFile(string path);
-        public Task Delete(string path);
+        public Task DeleteFile(string path);
+        public Task DeleteFolder(string folderPath);
     }
 }

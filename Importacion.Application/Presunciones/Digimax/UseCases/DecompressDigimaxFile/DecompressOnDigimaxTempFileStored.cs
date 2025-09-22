@@ -21,7 +21,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.Decom
         /// <returns>Task que representa la operación asíncrona.</returns>
         public async Task Consume(ConsumeContext<DigimaxTempFileStoredEvent> context)
         {
-            await _useCase.Execute(context.Message.Path, context.Message.PresuncionId);
+            await _useCase.Execute(context.Message.Path, context.Message.OriginalSourcePath);
         }
     }
 }

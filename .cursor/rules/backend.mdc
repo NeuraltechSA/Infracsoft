@@ -1,0 +1,448 @@
+---
+description: backend
+alwaysApply: false
+---
+# Reglas de Cursor para Backend - Proyecto Infracsoft
+
+## Arquitectura y Patrones
+
+### Clean Architecture / Domain-Driven Design (DDD)
+- Seguir estrictamente la separación en capas: Domain, Application, Infrastructure
+- El Domain debe ser independiente de frameworks y librerías externas
+- Usar interfaces (contratos) para desacoplar capas
+- Implementar el patrón Repository para acceso a datos
+- Usar Unit of Work para transacciones
+- Implementar Domain Events para comunicación entre agregados
+
+### Estructura de Proyectos (ASP.NET por Capas)
+- **Proyecto por Capa**: Cada capa debe ser un proyecto separado de ASP.NET
+- **Organización por Módulos**: Dentro de cada servicio hay módulos (ej: `Presunciones` es un módulo dentro de `Importacion`)
+- `Domain`: Entidades, Value Objects, Eventos, Excepciones, Servicios de dominio, Contratos
+- `Application`: Use Cases, DTOs, Interfaces de aplicación, Handlers
+- `Infrastructure`: Implementaciones de repositorios, servicios externos, persistencia, configuración EF
+- `Worker`: Procesos en background (Background Services) **[Opcional]**
+- `Migrations`: Migraciones de base de datos (proyecto separado)
+- `API`: Controladores, Middleware, Configuración de servicios (opcional, si se requiere API explícita)
+
+## Convenciones de Código
+
+### Nomenclatura
+- **Entidades**: PascalCase (ej: `PresuncionVelocidad`, `Imagen`)
+- **Value Objects**: PascalCase con sufijo descriptivo (ej: `PresuncionId`, `ImagenNombre`)
+- **Interfaces**: Prefijo "I" + PascalCase (ej: `IPresuncionRepository`, `IImagenStore`)
+- **Use Cases**: PascalCase + sufijo "UseCase" (ej: `ImportPresuncionDigimaxUseCase`)
+- **Eventos**: PascalCase + sufijo "Event" (ej: `ImagenCreatedDomainEvent`)
+- **Excepciones**: PascalCase + sufijo "Exception" (ej: `InvalidDigimaxImageCountException`)
+- **Servicios**: PascalCase + sufijo descriptivo (ej: `ImagenStore`, `PresuncionFinder`)
+
+### Value Objects
+- Heredar de `StringValueObject`, `UuidValueObject`, `FloatValueObject`, etc. del SharedKernel
+- Implementar validaciones en el constructor
+- Usar métodos `Ensure*` para validaciones específicas
+- **Lanzar excepciones de dominio personalizadas**, NO `ArgumentException`
+- Mensajes de error en español
+- Ejemplo:
+```csharp
+public sealed record ImagenNombre : StringValueObject
+{
+    private const int MinLength = 1;
+    private const int MaxLength = 255;
+
+    public ImagenNombre(string value) : base(value)
+    {
+        EnsureMinLength(value);
+        EnsureMaxLength(value);
+        EnsureValidFormat(value);
+    }
+
+    private static void EnsureMaxLength(string value)
+    {
+        if (value.Length > MaxLength)
+        {
+            throw new InvalidImagenNombreException($"El nombre de la imagen no puede exceder {MaxLength} caracteres");
+        }
+    }
+}
+```
+
+### Entidades
+- Heredar de `AggregateRoot` del SharedKernel
+- Propiedades inmutables con `get;` o `get; private set;`
+- Constructor privado para encapsulación
+- Método estático `Create()` para creación de instancias
+- Método `Delete()` que registra eventos de dominio
+- Usar Value Objects para propiedades complejas
+- **Registrar eventos de dominio**: Usar `RecordDomainEvent()` en métodos `Create()`, `Update()`, `Delete()`
+- **Eventos automáticos**: Los eventos se almacenan en `_domainEvents` y se recuperan con `PullDomainEvents()`
+
+### Use Cases
+- Usar inyección de dependencias en el constructor
+- Un solo método público `Execute()` con parámetros específicos
+- Manejo de excepciones con try-catch
+- **Orden de operaciones**:
+  1. Lógica de negocio y creación de entidades
+  2. Guardar en repositorio (`_repository.Create()`)
+  3. Publicar eventos de dominio (`_eventBus.Publish(presuncion.PullDomainEvents())`)
+  4. Confirmar transacción (`_unitOfWork.SaveChangesAsync()`)
+- **Manejo de errores**: Publicar eventos de fallo en catch blocks
+- Ejemplo:
+```csharp
+public class ImportPresuncionDigimaxUseCase(
+    IPresuncionRepository repository,
+    IUnitOfWork unitOfWork,
+    IEventBus eventBus,
+    IGuidGenerator guidGenerator
+)
+{
+    public async Task Execute(string compressedFileSourcePath)
+    {
+        try
+        {
+            var id = _guidGenerator.GenerateGuid().ToString();
+            var presuncion = PresuncionVelocidad.ImportFromDigimax(id, compressedFileSourcePath);
+
+            await _repository.Create(presuncion);
+            await _eventBus.Publish(presuncion.PullDomainEvents());
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception)
+        {
+            _eventBus.Publish(new ImportPresuncionDigimaxFailedEvent(compressedFileSourcePath));
+        }
+    }
+}
+```
+
+### Excepciones de Dominio
+- Heredar de `DomainException` del SharedKernel
+- Incluir documentación XML completa
+- Implementar constructores con mensaje y excepción interna
+- Crear métodos estáticos `Create()` para casos específicos
+- Mensajes descriptivos en español
+- **Para Value Objects**: Crear excepciones específicas por cada tipo de validación
+- **Para reglas de negocio**: Crear excepciones específicas por cada regla
+- Ejemplo para Value Object:
+```csharp
+/// <summary>
+/// Excepción que se lanza cuando el nombre de imagen no es válido.
+/// </summary>
+public class InvalidImagenNombreException : DomainException
+{
+    public InvalidImagenNombreException(string message) : base(message) { }
+    
+    public static InvalidImagenNombreException CreateForMaxLength(int maxLength)
+    {
+        return new InvalidImagenNombreException(
+            $"El nombre de la imagen no puede exceder {maxLength} caracteres");
+    }
+}
+```
+
+- Ejemplo para regla de negocio:
+```csharp
+/// <summary>
+/// Excepción que se lanza cuando el número de imágenes de una presunción Digimax no cumple con los requisitos.
+/// </summary>
+public class InvalidDigimaxImageCountException : DomainException
+{
+    public InvalidDigimaxImageCountException(string message) : base(message) { }
+    
+    public static InvalidDigimaxImageCountException Create(int expectedCount, int actualCount)
+    {
+        return new InvalidDigimaxImageCountException(
+            $"Los radares Digimax deben capturar exactamente {expectedCount} imágenes por presunción. Se encontraron {actualCount} imágenes.");
+    }
+}
+```
+
+### Eventos de Dominio
+- **Heredar de `DomainEvent`** del SharedKernel
+- **Usar `sealed record`** para eventos inmutables
+- **Propiedades `required`** para datos obligatorios con `init`
+- **Override `MessageName`** con formato: `"infracsoft.{servicio}.{entidad}.{accion}"`
+- Incluir todos los datos relevantes para el evento
+- **Nomenclatura**: `{Entidad}{Accion}DomainEvent`
+- Agrupar eventos relacionados en carpetas (ej: `Velocidad/`)
+- **Eventos de Fallo**: Organizar eventos de fallo en carpeta `Events/Failure/` para separarlos de eventos de éxito
+- **Eventos de Compensación**: Los eventos de fallo deben activar mecanismos de compensación (rollback)
+- Ejemplo:
+```csharp
+public sealed record ImagenCreatedDomainEvent() : DomainEvent
+{
+    public required string ImagenId { get; init; }
+    public required string Ruta { get; init; }
+    public required float Peso { get; init; }
+    public required string Nombre { get; init; }
+    public required string PresuncionId { get; init; }
+
+    public override string MessageName => "infracsoft.importacion.imagenes.created";
+}
+```
+
+### Manejo de Eventos
+- **Registrar eventos**: Usar `RecordDomainEvent()` en entidades
+- **Publicar eventos**: Usar `_eventBus.Publish()` en Use Cases
+- **EventBus**: Implementado con MassTransit para mensajería
+- **Routing**: Los eventos usan `MessageName` como routing key
+- **Logging**: EventBus incluye logging de eventos publicados
+- **Pull events**: Usar `presuncion.PullDomainEvents()` para obtener y limpiar eventos
+- **Orden**: Publicar eventos DESPUÉS de guardar en repositorio pero ANTES de `SaveChangesAsync()`
+- **Manejo de errores**: Publicar eventos de fallo en catch blocks
+
+### Eventos de Fallo y Compensación
+- **Organización**: Colocar eventos de fallo en carpeta `Events/Failure/` dentro de cada módulo
+- **Nomenclatura**: `{Entidad}{Accion}FailedEvent` (ej: `PresuncionImportFailedEvent`)
+- **Propósito**: Activar mecanismos de compensación (rollback) cuando fallan operaciones
+- **Datos mínimos**: Solo incluir información esencial para la compensación (IDs, rutas, etc.)
+- **Sin detalles técnicos**: NO incluir excepciones ni mensajes de error en los eventos
+- **Handlers de compensación**: Crear handlers específicos que ejecuten casos de uso de limpieza
+- **Ubicación de handlers**: Los handlers de compensación van en la carpeta del caso de uso que ejecutan
+
+### Handlers (Consumers de Eventos)
+- **Implementar `IConsumer<TEvent>`** de MassTransit
+- **Siempre llamar al Use Case** correspondiente en el método `Consume()`
+- **Inyección directa del Use Case** en el constructor
+- **Extraer datos del evento** usando `context.Message.PropertyName`
+- **Nomenclatura simplificada**: `{Accion}On{Evento}` (ej: `ImportOnPresuncionDigimaxUploaded`)
+- **Simplificar nombres de acciones**: Usar verbos simples como `Import`, `Store`, `Process`, `Check`
+- **Evitar verbos complejos**: Preferir `Import` en lugar de `ImportProcess`, `Store` en lugar de `StoreOperation`
+- **Documentación XML** completa para describir el propósito del handler
+- Ejemplo:
+```csharp
+/// <summary>
+/// Event handler que reacciona al evento PresuncionDigimaxUploadedEvent.
+/// Este handler inicia el proceso de importación de presunciones Digimax
+/// cuando se detecta que un archivo comprimido ha sido subido.
+/// </summary>
+public class ImportOnPresuncionDigimaxUploaded(
+    ImportPresuncionDigimaxUseCase importPresuncionDigimaxUseCase
+) : IConsumer<PresuncionDigimaxUploadedEvent>
+{
+    private readonly ImportPresuncionDigimaxUseCase _importPresuncionDigimaxUseCase = importPresuncionDigimaxUseCase;
+    
+    public async Task Consume(ConsumeContext<PresuncionDigimaxUploadedEvent> context)
+    {
+        await _importPresuncionDigimaxUseCase.Execute(context.Message.CompressedFileSourcePath);
+    }
+}
+```
+
+### Nomenclatura de Acciones en Event Handlers
+- **Acciones básicas**: `Create`, `Update`, `Delete`
+- **Acciones de proceso**: `Import`, `Export`, `Process`
+- **Acciones de almacenamiento**: `Store`, `Save`, `Upload`
+- **Acciones de verificación**: `Check`, `Validate`, `Verify`
+- **Acciones de compresión**: `Compress`, `Decompress`
+- **Acciones de fallo**: `Handle`, `Manage` (para manejo de errores)
+- **Evitar**: `ImportProcess`, `StoreOperation`, `CheckValidation`
+- **Preferir**: `Import`, `Store`, `Check`
+
+### Handlers HTTP (API Controllers)
+- **Heredar de `ControllerBase`**
+- **Inyección directa del Use Case** en el constructor
+- **Mapear parámetros HTTP** a DTOs del Use Case
+- **Siempre llamar al Use Case** en el método de acción
+- **Nomenclatura**: `{Accion}{Entidad}Handler`
+- Ejemplo:
+```csharp
+[ApiController]
+[Route("fuentes")]
+public class CreateFuenteFtpHandler(CreateFuenteFtpUseCase useCase) : ControllerBase
+{
+    [HttpPost("{id:guid}")]
+    public async Task<IActionResult> Post(
+        [FromRoute] Guid id, 
+        [FromBody] CreateFuenteRequest data)
+    {
+        await useCase.Execute(new CreateFuenteFtpDTO(
+            id.ToString(),
+            data.Nombre,
+            data.Descripcion,
+            data.Host,
+            data.Puerto,
+            data.Usuario,
+            data.Password
+        ));
+        return Created();
+    }
+}
+```
+
+### Background Services (Workers)
+- **Heredar de `BackgroundService`**
+- **Usar `IServiceScopeFactory`** para crear scope y obtener Use Cases
+- **Llamar al Use Case** dentro del scope creado
+- **Manejar `CancellationToken`** apropiadamente
+- Ejemplo:
+```csharp
+public class CheckPresuncionFilesUploadedWorker(
+    ILogger<CheckPresuncionFilesUploadedWorker> logger,
+    IServiceScopeFactory serviceScopeFactory
+) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var useCase = scope.ServiceProvider.GetRequiredService<CheckSourceDigimaxUseCase>();
+        await useCase.Execute();
+    }
+}
+```
+
+### Servicios de Dominio
+- Usar `sealed class` para servicios
+- Inyección de dependencias en el constructor
+- Métodos asíncronos para operaciones I/O
+- Manejo de errores con try-catch
+
+## Configuración de Proyectos
+
+### Archivos .csproj
+- Target Framework: `net8.0`
+- Habilitar `ImplicitUsings` y `Nullable`
+- RootNamespace: `Infracsoft.$(MSBuildProjectName.Replace(" ", "_"))`
+- **Proyectos ASP.NET**: Usar `Microsoft.NET.Sdk.Web` para proyectos que requieren funcionalidad web
+- **Proyectos de Librería**: Usar `Microsoft.NET.Sdk` para proyectos de dominio y aplicación
+- Referencias a SharedKernel apropiadas
+- **Dependencias entre capas**: 
+  - Domain: Sin dependencias externas (solo SharedKernel.Domain)
+  - Application: Depende de Domain
+  - Infrastructure: Depende de Application y Domain
+  - Worker/API: Dependen de todas las capas anteriores
+
+### Namespaces
+- Seguir la estructura: `Infracsoft.{Proyecto}.{Modulo}.{Carpeta}.{Subcarpeta}`
+- **Organización por módulos**: Cada módulo tiene su propio namespace
+- Ejemplo: `Infracsoft.Importacion.Domain.Presunciones.ValueObjects`
+- Ejemplo: `Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases`
+- Ejemplo: `Infracsoft.Importacion.Domain.Imagenes.Entities`
+
+## Reglas Específicas
+
+### Validaciones
+- Todas las validaciones de negocio deben estar en el Domain
+- Usar métodos privados estáticos con prefijo `Ensure` para validaciones
+- **Value Objects**: Lanzar excepciones de dominio personalizadas, NO `ArgumentException`
+- **Reglas de negocio**: Lanzar excepciones de dominio personalizadas específicas
+- Crear excepciones específicas para cada tipo de validación (ej: `InvalidImagenNombreException`)
+
+### Manejo de Archivos
+- Usar `Stream` para manipulación de archivos
+- Implementar validación de extensiones permitidas
+- Validar tamaños máximos de archivos
+- Usar rutas relativas con estructura de fechas (yyyy/MM/dd)
+
+### Expresiones Regulares
+- Definir como constantes estáticas públicas cuando se reutilizan
+- Usar grupos con nombres para extraer información
+- Validar formato antes de procesar
+
+### Fechas y Tiempo
+- Usar `TimeProvider` para inyección de dependencias de tiempo
+- Usar `DateTime.ParseExact()` con formatos específicos
+- Considerar `CultureInfo.InvariantCulture` para parsing
+
+### Inyección de Dependencias
+- Usar constructor injection
+- Registrar campos privados readonly para las dependencias
+- Usar interfaces para todas las dependencias externas
+
+## Buenas Prácticas
+
+### Código
+- Usar `sealed` para clases que no necesitan herencia
+- Preferir `record` para Value Objects
+- Usar `async/await` para operaciones asíncronas
+- Implementar `using` statements para recursos desechables
+
+### Documentación
+- Incluir documentación XML para excepciones públicas
+- Comentar lógica de negocio compleja
+- Usar comentarios TODO para mejoras futuras
+
+### Performance
+- Usar `IAsyncEnumerable` para streams grandes de datos
+- Implementar paginación para consultas grandes
+- Considerar caching para datos frecuentemente accedidos
+
+## Estructura de Carpetas y Proyectos
+
+### Estructura de Solución
+```
+Solution/
+├── {NombreServicio}.Domain/           # Proyecto de librería (.NET 8.0)
+├── {NombreServicio}.Application/      # Proyecto de librería (.NET 8.0)
+├── {NombreServicio}.Infrastructure/   # Proyecto de librería (.NET 8.0)
+├── {NombreServicio}.Worker/           # Proyecto ASP.NET (.NET 8.0 Web) [Opcional]
+├── {NombreServicio}.Migrations/       # Proyecto de librería (.NET 8.0)
+├── {NombreServicio}.API/              # Proyecto ASP.NET (.NET 8.0 Web) [Opcional]
+└── SharedKernel/                      # Proyectos compartidos
+    ├── SharedKernel.Domain/
+    ├── SharedKernel.Application/
+    └── SharedKernel.Infraestructure/
+```
+
+### Estructura Interna de Proyectos por Módulos
+```
+{Proyecto}/
+├── {Modulo}/                    # Ej: Presunciones, Imagenes
+│   ├── Contracts/               # Interfaces de repositorio y servicios
+│   ├── Criteria/                # Criterios de búsqueda
+│   ├── Entities/                # Entidades de dominio
+│   ├── Events/                  # Eventos de dominio
+│   │   ├── Failure/             # Eventos de fallo y compensación
+│   │   └── {Subcategoria}/      # Eventos agrupados por funcionalidad (ej: Velocidad/)
+│   ├── Exceptions/              # Excepciones específicas
+│   ├── Services/                # Servicios de dominio
+│   └── ValueObjects/            # Value Objects
+├── {OtroModulo}/                # Ej: Imagenes
+│   ├── Contracts/
+│   ├── Criteria/
+│   ├── Entities/
+│   ├── Events/
+│   ├── Exceptions/
+│   ├── Services/
+│   └── ValueObjects/
+└── SharedKernel/                # Solo en Infrastructure
+    └── Persistence/
+```
+
+### Ejemplo de Estructura Real (Importacion)
+```
+Importacion.Domain/
+├── Presunciones/
+│   ├── Contracts/
+│   ├── Criteria/
+│   ├── Entities/
+│   ├── Events/
+│   │   ├── Failure/             # Eventos de fallo (ej: PresuncionImportFailedEvent)
+│   │   └── Velocidad/           # Eventos específicos de velocidad
+│   ├── Exceptions/
+│   ├── Services/
+│   └── ValueObjects/
+├── Imagenes/
+│   ├── Contracts/
+│   ├── Criteria/
+│   ├── Entities/
+│   ├── Events/
+│   │   └── Failure/             # Eventos de fallo de imágenes
+│   ├── Exceptions/
+│   ├── Services/
+│   └── ValueObjects/
+└── SharedKernel/                # Solo en Infrastructure
+    └── Persistence/
+```
+
+## Comandos y Consultas
+
+- Seguir el patrón CQRS cuando sea apropiado
+- Separar comandos (que modifican estado) de consultas (que solo leen)
+- Usar Use Cases para comandos complejos
+- Implementar handlers específicos para cada operación
+
+## Logging y Monitoreo
+
+- Usar structured logging
+- Incluir correlation IDs para rastrear operaciones
+- Logear eventos importantes del dominio
+- Implementar health checks para servicios externos

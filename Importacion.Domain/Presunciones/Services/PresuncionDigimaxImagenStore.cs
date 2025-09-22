@@ -25,24 +25,31 @@ public sealed class PresuncionDigimaxImagenStore(
     /// <summary>
     /// Almacena las imágenes de una presunción Digimax desde un directorio temporal.
     /// Valida que existan exactamente 2 imágenes como requiere el protocolo Digimax.
+    /// Crea las imágenes sin asociarlas a una presunción aún.
     /// </summary>
     /// <param name="basePath">Ruta base del directorio temporal con las imágenes</param>
-    /// <param name="presuncionId">ID de la presunción a la que pertenecen las imágenes</param>
+    /// <param name="presuncionId">ID de la presunción (ignorado en este flujo)</param>
+    /// <returns>ID de la presunción generado</returns>
     /// <exception cref="InvalidOperationException">Se lanza cuando no se encuentran exactamente 2 imágenes</exception>
-    public async Task StoreImages(string basePath, string presuncionId)
+    public async Task<string> StoreImages(string basePath, string presuncionId)
     {
         var imagePaths = await GetImagePaths(basePath);
         ValidateDigimaxImageIntegrity(imagePaths);
         
+        var newPresuncionId = _guidGenerator.GenerateGuid().ToString();
+        
         foreach (var imagePath in imagePaths)
         {
             var imageId = _guidGenerator.GenerateGuid().ToString();
-            using var imageStream = await _tempStore.DownloadFile(imagePath);
-            var filename = Path.GetFileName(imagePath);
-            
-            await _imagenStore.Store(imageId, presuncionId, filename, imageStream);
-            await _tempStore.Delete(imagePath);
+            using (var imageStream = await _tempStore.DownloadFile(imagePath))
+            {
+                var filename = Path.GetFileName(imagePath);
+                await _imagenStore.Store(imageId, null, filename, imageStream);
+            }
+            await _tempStore.DeleteFile(imagePath);
         }
+        
+        return newPresuncionId;
     }
 
     /// <summary>

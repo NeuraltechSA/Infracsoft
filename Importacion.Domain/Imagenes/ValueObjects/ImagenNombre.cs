@@ -34,12 +34,8 @@ public sealed record ImagenNombre : StringValueObject
 
     private static void EnsureValidFormat(string value)
     {
-        if (!Regex.IsMatch(value, @"^[a-zA-Z0-9\s\-_\.]+$"))
-        {
-            throw new ArgumentException("El nombre de la imagen solo puede contener letras, números, espacios, puntos, guiones y guiones bajos");
-        }
 
-        var extension = System.IO.Path.GetExtension(value).ToLowerInvariant();
+        var extension = Path.GetExtension(value).ToLowerInvariant();
         var validExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp" };
         
         if (!string.IsNullOrEmpty(extension) && !Array.Exists(validExtensions, ext => ext == extension))

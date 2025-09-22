@@ -4,13 +4,14 @@ using SharedKernel.Domain.Contracts;
 
 namespace Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.ImportPresuncionDigmax;
 
-public class ImportOnPresuncionDigimaxUploaded(
+public class ImportOnPresuncionDigimaxImagesStored(
     ImportPresuncionDigimaxUseCase importPresuncionDigimaxUseCase
-) : IConsumer<PresuncionDigimaxUploadedEvent>
+) : IConsumer<PresuncionDigimaxImagesStoredEvent>
 {
     private readonly ImportPresuncionDigimaxUseCase _importPresuncionDigimaxUseCase = importPresuncionDigimaxUseCase;
-    public async Task Consume(ConsumeContext<PresuncionDigimaxUploadedEvent> context)
+    
+    public async Task Consume(ConsumeContext<PresuncionDigimaxImagesStoredEvent> context)
     {
-        await _importPresuncionDigimaxUseCase.Execute(context.Message.CompressedFileSourcePath);
+        await _importPresuncionDigimaxUseCase.Execute(context.Message.CompressedFileSourcePath, context.Message.PresuncionId);
     }
 }

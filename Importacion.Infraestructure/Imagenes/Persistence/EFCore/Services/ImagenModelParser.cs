@@ -25,7 +25,7 @@ public class ImagenModelParser : IModelParser<Imagen, ImagenModel>
             Ruta = entity.Ruta.Value,
             Peso = entity.Peso.Value,
             Nombre = entity.Nombre.Value,
-            PresuncionId = new Guid(entity.PresuncionId.Value)
+            PresuncionId = entity.PresuncionId?.Value != null ?  new Guid(entity.PresuncionId.Value) : null
         };
     }
 }

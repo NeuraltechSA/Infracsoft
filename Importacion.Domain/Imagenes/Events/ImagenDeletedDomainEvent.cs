@@ -10,7 +10,7 @@ public sealed record ImagenDeletedDomainEvent(
     public required string Ruta { get; init; }
     public required float Peso { get; init; }
     public required string Nombre { get; init; }
-    public required string PresuncionId { get; init; }
+    public string? PresuncionId { get; init; }
 
     public override string MessageName => "infracsoft.importacion.imagenes.deleted";
 }

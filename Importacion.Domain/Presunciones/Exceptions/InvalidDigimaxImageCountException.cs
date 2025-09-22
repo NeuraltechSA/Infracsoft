@@ -38,3 +38,5 @@ public class InvalidDigimaxImageCountException : DomainException
     }
 }
 
+
+

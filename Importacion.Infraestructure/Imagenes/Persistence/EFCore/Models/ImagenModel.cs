@@ -16,8 +16,7 @@ public class ImagenModel : BaseEFCoreModel
     [MaxLength(255)]
     public required string Nombre { get; init; }
     
-    [Required]
-    public required Guid PresuncionId { get; init; }
+    public Guid? PresuncionId { get; init; }
 
     public ImagenModel() { }
 }

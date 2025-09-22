@@ -14,7 +14,7 @@ public class StoreImagesOnDecompressedDigimaxFile(
     { 
         await _storeImportedDigimaxPresuncionImagesUseCase.Execute(
             context.Message.BasePath,
-            context.Message.PresuncionId
+            context.Message.OriginalSourcePath
         );
     }
 }

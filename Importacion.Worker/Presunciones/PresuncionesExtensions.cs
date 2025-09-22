@@ -44,9 +44,9 @@ namespace Infracsoft.Importacion.Worker.Presunciones
             #region Consumers
             services.AddMassTransit(x =>
             {
-                x.AddConsumer<ImportPresuncionDigimaxOnUploaded>();
+                x.AddConsumer<ImportOnPresuncionDigimaxImagesStored>();
                 x.AddConsumer<DecompressOnDigimaxTempFileStored>();
-                x.AddConsumer<StoreTempFileOnPresuncionDigimaxImported>();
+                x.AddConsumer<StoreTempFileOnPresuncionDigimaxUploaded>();
                 x.AddConsumer<StoreImagesOnDecompressedDigimaxFile>();
             });
             #endregion

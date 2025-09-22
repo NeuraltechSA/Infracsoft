@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailDev.Hosting", "MailDev.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PureFtpd.Hosting", "PureFtpd.Hosting\PureFtpd.Hosting.csproj", "{112152AD-CE6C-4402-AAF3-0EFC964A6182}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenombradoOld.API", "RenombradoOld.API\RenombradoOld.API.csproj", "{1C85C0AF-A13D-498D-8C9C-F4EC2940DBBB}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Importaciones", "Importaciones", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Importacion.Application", "Importacion.Application\Importacion.Application.csproj", "{1499B5F9-51A1-9287-1267-BBD382E8A28B}"
@@ -55,10 +53,6 @@ Global
 		{112152AD-CE6C-4402-AAF3-0EFC964A6182}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{112152AD-CE6C-4402-AAF3-0EFC964A6182}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{112152AD-CE6C-4402-AAF3-0EFC964A6182}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1C85C0AF-A13D-498D-8C9C-F4EC2940DBBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1C85C0AF-A13D-498D-8C9C-F4EC2940DBBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1C85C0AF-A13D-498D-8C9C-F4EC2940DBBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1C85C0AF-A13D-498D-8C9C-F4EC2940DBBB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1499B5F9-51A1-9287-1267-BBD382E8A28B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1499B5F9-51A1-9287-1267-BBD382E8A28B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1499B5F9-51A1-9287-1267-BBD382E8A28B}.Release|Any CPU.ActiveCfg = Release|Any CPU

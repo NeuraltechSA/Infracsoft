@@ -1,12 +1,6 @@
-﻿using RenombradoOld.Fuentes.Application.CreateFuenteFtp;
-using RenombradoOld.Fuentes.Domain.Contracts;
-using RenombradoOld.Fuentes.Infrastructure.Persistence.EFCore.Repositories;
-using RenombradoOld.API.Modules.Fuentes.Validators;
+﻿using RenombradoOld.API.Modules.Fuentes.Validators;
 using FluentValidation;
 using RenombradoOld.API.Modules.Fuentes.DTO;
-using RenombradoOld.Fuentes.Domain.Services;
-using RenombradoOld.Fuentes.Application.DeleteFuente;
-using RenombradoOld.Fuentes.Application.UpdateFuenteFtp;
 
 namespace RenombradoOld.API.Modules.Fuentes.Extensions
 {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Infracsoft.Importacion.Domain.Presunciones.ValueObjects;
 using Infracsoft.Importacion.Domain.Presunciones.Events;
+using Infracsoft.Importacion.Domain.Imagenes.Entities;
 using SharedKernel.Domain.Entities;
 
 namespace Infracsoft.Importacion.Domain.Presunciones.Entities;
@@ -11,6 +12,7 @@ public abstract class Presuncion : AggregateRoot
     public PresuncionFechaHora? FechaHora { get; protected set; }
     public PresuncionLugar? Lugar { get; protected set; }
     public PresuncionPatente? Patente { get; protected set; }
+    public ICollection<Imagen> Imagenes { get; private set; } = new List<Imagen>();
 
     protected Presuncion(string id,string? lugar, string? patente = null, DateTime ? fechaHora = null)
     {
@@ -28,6 +30,10 @@ public abstract class Presuncion : AggregateRoot
         //TODO: Update event
     }
 
+    public void AddImagen(Imagen imagen)
+    {
+        Imagenes.Add(imagen);
+    }
 
     public abstract void Delete();
 

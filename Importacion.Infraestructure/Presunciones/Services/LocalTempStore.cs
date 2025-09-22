@@ -49,7 +49,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure
             return await Task.FromResult(fileStream);
         }
 
-        public Task Delete(string path)
+        public Task DeleteFile(string path)
         {
             var fullPath = Path.Combine(_tempPath, path);
             if (File.Exists(fullPath))
@@ -57,6 +57,17 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure
                 File.Delete(fullPath);
             }
 
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteFolder(string folderPath)
+        {
+            var fullPath = Path.Combine(_tempPath, folderPath);
+            if (!Directory.Exists(fullPath))
+            {
+                //TODO: Exception   
+            }
+            Directory.Delete(fullPath, true);
             return Task.CompletedTask;
         }
 
@@ -69,5 +80,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure
             }
             return await Task.FromResult(Directory.GetFiles(fullPath));
         }
+
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿
 using Infracsoft.Importacion.Domain.Imagenes.Contracts;
 using Infracsoft.Importacion.Domain.Imagenes.Entities;
+using Infracsoft.Importacion.Domain.Imagenes.ValueObjects;
 using SharedKernel.Domain.Contracts;
 namespace Infracsoft.Importacion.Domain.Imagenes.Services
 {
@@ -16,7 +17,7 @@ namespace Infracsoft.Importacion.Domain.Imagenes.Services
         {
             return $"{timeProvider.GetUtcNow().ToString("yyyy/MM/dd")}/{id}{Path.GetExtension(fileName)}";
         }
-        public async Task Store(string id, string presuncionId, string filename, Stream stream)
+        public async Task Store(string id, string? presuncionId, string filename, Stream stream)
         {
             string? path = null;
             try
@@ -35,6 +36,18 @@ namespace Infracsoft.Importacion.Domain.Imagenes.Services
             }
 
             //TODO: Asegurarme que la operación sea atómica
+        }
+
+        public async Task Delete(string id)
+        {
+            var imagen = await repository.Find(new ImagenId(id)); //TODO: Exception si no existe
+            if (imagen != null)
+            {
+                await store.Delete(imagen.RutaCompleta);
+                await repository.Delete(imagen);
+                await eventBus.Publish(imagen.PullDomainEvents());
+                await unitOfWork.SaveChangesAsync();
+            }
         }
     }
 }

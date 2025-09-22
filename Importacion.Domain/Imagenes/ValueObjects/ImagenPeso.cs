@@ -10,7 +10,7 @@ public sealed record ImagenPeso : FloatValueObject
 
     public ImagenPeso(float value) : base(value)
     {
-        EnsureValidRange(value);
+        //EnsureValidRange(value);TODO:
     }
 
     private static void EnsureValidRange(float value)

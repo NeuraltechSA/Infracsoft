@@ -31,7 +31,7 @@ namespace Infracsoft.Importacion.Infraestructure.Imagenes.Services
             // Asegurar que el contenedor existe
             await containerClient.CreateIfNotExistsAsync();
 
-            //await containerClient.SetAccessPolicyAsync(PublicAccessType.Blob);
+            await containerClient.SetAccessPolicyAsync(PublicAccessType.Blob); //TODO: Revisar donde poner
 
             var blobClient = containerClient.GetBlobClient(path);
 
