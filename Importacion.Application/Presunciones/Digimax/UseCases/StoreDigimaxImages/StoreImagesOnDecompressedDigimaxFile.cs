@@ -13,7 +13,8 @@ public class StoreImagesOnDecompressedDigimaxFile(
     public async Task Consume(ConsumeContext<DecompressedDigimaxFileEvent> context)
     { 
         await _storeImportedDigimaxPresuncionImagesUseCase.Execute(
-            context.Message.BasePath,
+            context.Message.TempFilePath,
+            context.Message.TempBasePath,
             context.Message.OriginalSourcePath
         );
     }

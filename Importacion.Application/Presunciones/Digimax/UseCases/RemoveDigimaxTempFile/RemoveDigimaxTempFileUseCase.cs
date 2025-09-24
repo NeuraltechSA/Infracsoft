@@ -13,18 +13,10 @@ public class RemoveDigimaxTempFileUseCase(IPresuncionTempStore tempStore)
     /// <summary>
     /// Ejecuta la eliminación de archivos temporales del directorio base.
     /// </summary>
-    /// <param name="basePath">Ruta base del directorio a limpiar.</param>
+    /// <param name="tempFilePath">Ruta el archivo temporal a eliminar.</param>
     /// <returns>Task que representa la operación asíncrona.</returns>
-    public async Task Execute(string basePath)
+    public async Task Execute(string tempFilePath)
     {
-        // Eliminar todos los archivos del directorio base
-        var allPaths = await _tempStore.GetFilePathsFromFolder(basePath);
-        foreach (var path in allPaths)
-        {
-            await _tempStore.DeleteFile(path);
-        }
-        
-        // Eliminar el directorio base si está vacío
-        await _tempStore.DeleteFolder(basePath);
+        await _tempStore.DeleteFile(tempFilePath);
     }
 }

@@ -2,7 +2,7 @@
 description: backend
 alwaysApply: false
 ---
-# Reglas de Cursor para Backend - Proyecto Infracsoft
+# Reglas de Cursor para Backend
 
 ## Arquitectura y Patrones
 
@@ -16,7 +16,7 @@ alwaysApply: false
 
 ### Estructura de Proyectos (ASP.NET por Capas)
 - **Proyecto por Capa**: Cada capa debe ser un proyecto separado de ASP.NET
-- **Organización por Módulos**: Dentro de cada servicio hay módulos (ej: `Presunciones` es un módulo dentro de `Importacion`)
+- **Organización por Módulos**: Dentro de cada servicio hay módulos (ej: `Presunciones` es un módulo dentro de `Importacion`, `Songs` es un módulo dentro de `MusicBingo`)
 - `Domain`: Entidades, Value Objects, Eventos, Excepciones, Servicios de dominio, Contratos
 - `Application`: Use Cases, DTOs, Interfaces de aplicación, Handlers
 - `Infrastructure`: Implementaciones de repositorios, servicios externos, persistencia, configuración EF
@@ -41,7 +41,35 @@ alwaysApply: false
 - Usar métodos `Ensure*` para validaciones específicas
 - **Lanzar excepciones de dominio personalizadas**, NO `ArgumentException`
 - Mensajes de error en español
-- Ejemplo:
+- **PREFIJO DE ENTIDAD**: Los Value Objects deben tener prefijo del nombre de la entidad para evitar colisiones
+- **Nomenclatura**: `{Entidad}{Concepto}` (ej: `SongId`, `SongName`, `SongPlaylistId` en lugar de `PlaylistId`)
+- **Cuándo aplicar**: Cuando el Value Object representa un concepto específico de una entidad
+- **Cuándo NO aplicar**: Cuando el Value Object es genérico y se reutiliza entre múltiples entidades (ej: `Email`, `Money`, `Address`)
+
+- **Ejemplo INCORRECTO** (sin prefijo de entidad):
+```csharp
+// ❌ INCORRECTO - Colisión de nombres
+public sealed record PlaylistId : UuidValueObject  // En módulo Songs
+public sealed record PlaylistId : UuidValueObject  // En módulo Playlists - ¡COLISIÓN!
+```
+
+- **Ejemplo CORRECTO** (con prefijo de entidad):
+```csharp
+// ✅ CORRECTO - Sin colisiones
+public sealed record SongPlaylistId : UuidValueObject    // En módulo Songs
+public sealed record PlaylistId : UuidValueObject        // En módulo Playlists
+public sealed record SongId : UuidValueObject            // En módulo Songs
+public sealed record SongName : StringValueObject        // En módulo Songs
+public sealed record PlaylistName : StringValueObject    // En módulo Playlists
+public sealed record PlaylistCoverUrl : StringValueObject // En módulo Playlists
+
+// ✅ CORRECTO - Value Objects genéricos (sin prefijo)
+public sealed record Email : StringValueObject           // Reutilizable
+public sealed record Money : DecimalValueObject          // Reutilizable
+public sealed record Address : StringValueObject          // Reutilizable
+```
+
+- Ejemplo de implementación:
 ```csharp
 public sealed record ImagenNombre : StringValueObject
 {
@@ -159,23 +187,48 @@ public class InvalidDigimaxImageCountException : DomainException
 - **Heredar de `DomainEvent`** del SharedKernel
 - **Usar `sealed record`** para eventos inmutables
 - **Propiedades `required`** para datos obligatorios con `init`
-- **Override `MessageName`** con formato: `"infracsoft.{servicio}.{entidad}.{accion}"`
+- **Override `MessageName`** con formato: `"{nombreproyecto}.{servicio}.{entidad}.{accion}"`
 - Incluir todos los datos relevantes para el evento
 - **Nomenclatura**: `{Entidad}{Accion}DomainEvent`
-- Agrupar eventos relacionados en carpetas (ej: `Velocidad/`)
+- Agrupar eventos relacionados en carpetas (ej: `Velocidad/`, `Cage/`)
 - **Eventos de Fallo**: Organizar eventos de fallo en carpeta `Events/Failure/` para separarlos de eventos de éxito
 - **Eventos de Compensación**: Los eventos de fallo deben activar mecanismos de compensación (rollback)
+- **SOLO TIPOS PRIMITIVOS**: Los eventos de dominio SOLO deben transportar tipos primitivos (string, int, bool, DateTime, Guid, etc.)
+- **PROHIBIDO**: NO usar Value Objects en eventos de dominio, siempre extraer el valor primitivo (.Value)
 - Ejemplo:
 ```csharp
 public sealed record ImagenCreatedDomainEvent() : DomainEvent
 {
-    public required string ImagenId { get; init; }
-    public required string Ruta { get; init; }
-    public required float Peso { get; init; }
-    public required string Nombre { get; init; }
-    public required string PresuncionId { get; init; }
+    public required string ImagenId { get; init; }        // ✅ Primitivo
+    public required string Ruta { get; init; }            // ✅ Primitivo
+    public required float Peso { get; init; }             // ✅ Primitivo
+    public required string Nombre { get; init; }          // ✅ Primitivo
+    public required string PresuncionId { get; init; }    // ✅ Primitivo
 
-    public override string MessageName => "infracsoft.importacion.imagenes.created";
+    public override string MessageName => "{nombreproyecto}.importacion.imagenes.created";
+}
+```
+
+- Ejemplo INCORRECTO:
+```csharp
+public sealed record SongDrewFromCageEvent() : DomainEvent
+{
+    public required SongId SongId { get; init; }              // ❌ PROHIBIDO - Value Object
+    public required PlaylistId PlaylistId { get; init; }      // ❌ PROHIBIDO - Value Object
+    public required SongName SongName { get; init; }          // ❌ PROHIBIDO - Value Object
+}
+```
+
+- Ejemplo CORRECTO:
+```csharp
+public sealed record SongDrewFromCageEvent() : DomainEvent
+{
+    public required Guid SongId { get; init; }                // ✅ CORRECTO - Primitivo
+    public required Guid PlaylistId { get; init; }            // ✅ CORRECTO - Primitivo
+    public required string SongName { get; init; }            // ✅ CORRECTO - Primitivo
+    public required string ArtistName { get; init; }          // ✅ CORRECTO - Primitivo
+    public required int DurationSeconds { get; init; }        // ✅ CORRECTO - Primitivo
+    public required DateTime DrewAt { get; init; }            // ✅ CORRECTO - Primitivo
 }
 ```
 
@@ -203,7 +256,7 @@ public sealed record ImagenCreatedDomainEvent() : DomainEvent
 - **Siempre llamar al Use Case** correspondiente en el método `Consume()`
 - **Inyección directa del Use Case** en el constructor
 - **Extraer datos del evento** usando `context.Message.PropertyName`
-- **Nomenclatura simplificada**: `{Accion}On{Evento}` (ej: `ImportOnPresuncionDigimaxUploaded`)
+- **Nomenclatura simplificada**: `{Accion}On{Evento}` (ej: `ImportOnPresuncionDigimaxUploaded`, `DrawOnSongDrewFromCage`)
 - **Simplificar nombres de acciones**: Usar verbos simples como `Import`, `Store`, `Process`, `Check`
 - **Evitar verbos complejos**: Preferir `Import` en lugar de `ImportProcess`, `Store` en lugar de `StoreOperation`
 - **Documentación XML** completa para describir el propósito del handler
@@ -229,7 +282,7 @@ public class ImportOnPresuncionDigimaxUploaded(
 
 ### Nomenclatura de Acciones en Event Handlers
 - **Acciones básicas**: `Create`, `Update`, `Delete`
-- **Acciones de proceso**: `Import`, `Export`, `Process`
+- **Acciones de proceso**: `Import`, `Export`, `Process`, `Draw`
 - **Acciones de almacenamiento**: `Store`, `Save`, `Upload`
 - **Acciones de verificación**: `Check`, `Validate`, `Verify`
 - **Acciones de compresión**: `Compress`, `Decompress`
@@ -300,7 +353,7 @@ public class CheckPresuncionFilesUploadedWorker(
 ### Archivos .csproj
 - Target Framework: `net8.0`
 - Habilitar `ImplicitUsings` y `Nullable`
-- RootNamespace: `Infracsoft.$(MSBuildProjectName.Replace(" ", "_"))`
+- RootNamespace: `{NombreProyecto}.$(MSBuildProjectName.Replace(" ", "_"))`
 - **Proyectos ASP.NET**: Usar `Microsoft.NET.Sdk.Web` para proyectos que requieren funcionalidad web
 - **Proyectos de Librería**: Usar `Microsoft.NET.Sdk` para proyectos de dominio y aplicación
 - Referencias a SharedKernel apropiadas
@@ -311,11 +364,11 @@ public class CheckPresuncionFilesUploadedWorker(
   - Worker/API: Dependen de todas las capas anteriores
 
 ### Namespaces
-- Seguir la estructura: `Infracsoft.{Proyecto}.{Modulo}.{Carpeta}.{Subcarpeta}`
+- Seguir la estructura: `{NombreProyecto}.{Servicio}.{Modulo}.{Carpeta}.{Subcarpeta}`
 - **Organización por módulos**: Cada módulo tiene su propio namespace
-- Ejemplo: `Infracsoft.Importacion.Domain.Presunciones.ValueObjects`
-- Ejemplo: `Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases`
-- Ejemplo: `Infracsoft.Importacion.Domain.Imagenes.Entities`
+- Ejemplo: `{NombreProyecto}.Importacion.Domain.Presunciones.ValueObjects`
+- Ejemplo: `{NombreProyecto}.Importacion.Application.Presunciones.Digimax.UseCases`
+- Ejemplo: `{NombreProyecto}.Importacion.Domain.Imagenes.Entities`
 
 ## Reglas Específicas
 
@@ -407,25 +460,25 @@ Solution/
     └── Persistence/
 ```
 
-### Ejemplo de Estructura Real (Importacion)
+### Ejemplo de Estructura Real
 ```
-Importacion.Domain/
-├── Presunciones/
+{NombreServicio}.Domain/
+├── {Modulo1}/
 │   ├── Contracts/
 │   ├── Criteria/
 │   ├── Entities/
 │   ├── Events/
-│   │   ├── Failure/             # Eventos de fallo (ej: PresuncionImportFailedEvent)
-│   │   └── Velocidad/           # Eventos específicos de velocidad
+│   │   ├── Failure/             # Eventos de fallo (ej: {Entidad}ImportFailedEvent)
+│   │   └── {Subcategoria}/      # Eventos específicos por funcionalidad
 │   ├── Exceptions/
 │   ├── Services/
 │   └── ValueObjects/
-├── Imagenes/
+├── {Modulo2}/
 │   ├── Contracts/
 │   ├── Criteria/
 │   ├── Entities/
 │   ├── Events/
-│   │   └── Failure/             # Eventos de fallo de imágenes
+│   │   └── Failure/             # Eventos de fallo del módulo
 │   ├── Exceptions/
 │   ├── Services/
 │   └── ValueObjects/

@@ -5,7 +5,7 @@ using Infracsoft.Importacion.Domain.Imagenes.ValueObjects;
 using SharedKernel.Domain.Contracts;
 namespace Infracsoft.Importacion.Domain.Imagenes.Services
 {
-    public sealed class ImagenStore(
+    public class ImagenStore(
         IImagenStore store,
         IImagenRepository repository,
         IUnitOfWork unitOfWork,

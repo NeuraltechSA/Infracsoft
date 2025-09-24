@@ -19,7 +19,7 @@ public class RemoveTempImagesOnDigimaxImagesStorageFailed(RemoveDigimaxTempImage
     /// <returns>Task que representa la operación asíncrona.</returns>
     public async Task Consume(ConsumeContext<DigimaxImagesStorageFailedEvent> context)
     {
-        await _useCase.Execute(context.Message.BasePath);
+        await _useCase.Execute(context.Message.TempBasePath);
     }
 }
 

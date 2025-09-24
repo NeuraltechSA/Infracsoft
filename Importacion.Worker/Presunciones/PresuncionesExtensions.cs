@@ -2,8 +2,10 @@
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.CheckSourceDigimax;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.DecompressDigimaxTempFile;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.ImportPresuncionDigmax;
-using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxTempFile;
+using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.RemoveDigimaxTempFile;
+using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.RemoveDigimaxTempImages;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxImages;
+using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxTempFile;
 using Infracsoft.Importacion.Domain.Presunciones.Contracts;
 using Infracsoft.Importacion.Domain.Presunciones.Events;
 using Infracsoft.Importacion.Domain.Presunciones.Services;
@@ -35,6 +37,8 @@ namespace Infracsoft.Importacion.Worker.Presunciones
             services.AddScoped<StoreDigimaxTempFileUseCase>();
             services.AddScoped<DecompressDigimaxFileUseCase>();
             services.AddScoped<StoreDigimaxImagesUseCase>();
+            services.AddScoped<RemoveDigimaxTempFileUseCase>();
+            services.AddScoped<RemoveDigimaxTempImagesUseCase>();
             #endregion
 
             #region Services
@@ -48,6 +52,10 @@ namespace Infracsoft.Importacion.Worker.Presunciones
                 x.AddConsumer<DecompressOnDigimaxTempFileStored>();
                 x.AddConsumer<StoreTempFileOnPresuncionDigimaxUploaded>();
                 x.AddConsumer<StoreImagesOnDecompressedDigimaxFile>();
+                
+                x.AddConsumer<RemoveTempFileOnDigimaxDecompressionFailed>();
+                x.AddConsumer<RemoveTempFileOnDigimaxImagesStorageFailed>();
+                x.AddConsumer<RemoveTempImagesOnDigimaxImagesStorageFailed>();
             });
             #endregion
 
