@@ -6,7 +6,7 @@ public sealed class Filter
     private readonly FilterOperator _operator;
     private readonly FilterValue _value;
 
-    public Filter(string field, FilterOperators @operator, string value)
+    public Filter(string field, FilterOperators @operator, dynamic value)
     {
         _field = new FilterField(field);
         _operator = new FilterOperator(@operator);

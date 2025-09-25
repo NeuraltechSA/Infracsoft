@@ -20,6 +20,8 @@ public class EFCoreCriteriaConverter
             FilterOperators.NOT_CONTAINS => $"{filter.GetField()}.NotContains(@0)",
             FilterOperators.STARTS_WITH => $"{filter.GetField()}.StartsWith(@0)",
             FilterOperators.ENDS_WITH => $"{filter.GetField()}.EndsWith(@0)",
+            FilterOperators.IN => "@0.Contains(" + filter.GetField() + ")",
+            FilterOperators.NOT_IN => "!@0.Contains(" + filter.GetField() + ")",
             _ => throw new Exception("Invalid operator")
         };
     }

@@ -11,31 +11,31 @@ public class BaseCriteria
     protected Orders Orders { get; private set; }
     protected Pagination? Pagination { get; private set; }
 
-    public BaseCriteria(Filters filters, Orders orders, Pagination? pagination = null)
+    public BaseCriteria(Filters? filters = null, Orders? orders = null, Pagination? pagination = null)
     {
-        Filters = filters;
-        Orders = orders;
+        Filters = filters ?? new Filters([]);
+        Orders = orders ?? new Orders([]);
         Pagination = pagination;
     }
 
-    protected BaseCriteria AddFilter(Filter.Filter newFilter)
+    public BaseCriteria AddFilter(Filter.Filter newFilter)
     {
         var newFilters = new List<Filter.Filter>(Filters.Value) { newFilter };
-        return new BaseCriteria(
-            new Filters(newFilters),
-            Orders,
-            Pagination
-        );
+        Filters = new Filters(newFilters);
+        return this;
     }
 
-    protected BaseCriteria AddOrder(Order.Order newOrder)
+    public BaseCriteria AddOrder(Order.Order newOrder)
     {
         var newOrders = new List<Order.Order>(Orders.Value) { newOrder };
-        return new BaseCriteria(
-            Filters,
-            new Orders(newOrders),
-            Pagination
-        );
+        Orders = new Orders(newOrders);
+        return this;
+    }
+
+    public BaseCriteria Paginate(int page, int pageSize)
+    {
+        Pagination = new Pagination(page, pageSize);
+        return this;
     }
 
     public List<Filter.Filter> GetFilters() => Filters.Value;
