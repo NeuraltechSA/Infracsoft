@@ -26,6 +26,51 @@ alwaysApply: false
 
 ## Convenciones de Código
 
+### Principio de Simplicidad
+- **KISS (Keep It Simple, Stupid)**: Priorizar código simple y directo
+- **Evitar sobre-ingeniería**: No agregar complejidad innecesaria
+- **Iterativo**: Empezar simple y agregar complejidad solo cuando sea necesario
+- **Consistencia**: Seguir el patrón establecido en el proyecto existente
+- **Menos es más**: Preferir implementaciones concisas sobre extensas
+- **Ejemplo de evolución**:
+  ```csharp
+  // ❌ SOBRE-COMPLICADO (primera iteración)
+  public class PresuncionImagenes : ListValueObject<PresuncionImagenId>
+  {
+      // 50+ líneas con múltiples métodos, documentación XML excesiva,
+      // métodos específicos de Digimax, propiedades adicionales...
+  }
+  
+  // ✅ SIMPLE Y DIRECTO (iteración final)
+  public record PresuncionImagenes : ListValueObject<PresuncionImagenId>
+  {
+      public static readonly int MaxImages = 5;
+      public static readonly int MinImages = 1;
+
+      public PresuncionImagenes(IReadOnlyList<PresuncionImagenId> Value) : base(Value)
+      {
+          EnsureMinImages(Value);
+          EnsureMaxImages(Value);
+      }
+
+      private static void EnsureMinImages(IReadOnlyList<PresuncionImagenId> value)
+      {
+          if (value.Count < MinImages)
+          {
+              throw InvalidPresuncionImagenesException.CreateMinImages(MinImages, value.Count);
+          }
+      }
+
+      private static void EnsureMaxImages(IReadOnlyList<PresuncionImagenId> value)
+      {
+          if (value.Count > MaxImages)
+          {
+              throw InvalidPresuncionImagenesException.CreateMaxImages(MaxImages, value.Count);
+          }
+      }
+  }
+  ```
+
 ### Nomenclatura
 - **Entidades**: PascalCase (ej: `PresuncionVelocidad`, `Imagen`)
 - **Value Objects**: PascalCase con sufijo descriptivo (ej: `PresuncionId`, `ImagenNombre`)
@@ -105,14 +150,67 @@ public sealed record ImagenNombre : StringValueObject
 
 ### Use Cases
 - Usar inyección de dependencias en el constructor
-- Un solo método público `Execute()` con parámetros específicos
-- Manejo de excepciones con try-catch
+- **Dos métodos públicos**: `Execute()` para infraestructura (logging, try-catch) y método específico para lógica principal
+- **Separación de responsabilidades**: `Execute()` maneja concerns de infraestructura, método principal maneja lógica de negocio
+- **Manejo de errores**: TODO para implementar logging y try-catch en `Execute()`
 - **Orden de operaciones**:
-  1. Lógica de negocio y creación de entidades
-  2. Guardar en repositorio (`_repository.Create()`)
-  3. Publicar eventos de dominio (`_eventBus.Publish(presuncion.PullDomainEvents())`)
-  4. Confirmar transacción (`_unitOfWork.SaveChangesAsync()`)
-- **Manejo de errores**: Publicar eventos de fallo en catch blocks
+  1. Validaciones de dominio (usar Finders)
+  2. Lógica de negocio y creación de entidades
+  3. Guardar en repositorio (`_repository.Create()`)
+  4. Publicar eventos de dominio (`_eventBus.Publish(aggregate.PullDomainEvents())`)
+  5. Confirmar transacción (`_unitOfWork.SaveChangesAsync()`)
+- **Ejemplo de estructura**:
+```csharp
+public async Task<Entity> Execute(Request request)
+{
+    //TODO: try catch, logging
+    return await Create(request);
+}
+
+public async Task<Entity> Create(Request request)
+{
+    await _finder.FindOrFail(request.Id);
+    
+    var entity = Entity.Create(...);
+    
+    await _repository.Create(entity);
+    await _eventBus.Publish(entity.PullDomainEvents());
+    await _unitOfWork.SaveChangesAsync();
+    
+    return entity;
+}
+```
+
+### DTOs (Data Transfer Objects)
+- **Ubicación**: En la misma carpeta del Use Case que los utiliza
+- **Nomenclatura**: `{UseCase}Request`, `{UseCase}Response`, `{Entidad}DTO`
+- **Inmutabilidad**: Usar `record` para DTOs inmutables
+- **Un archivo por DTO**: Separar cada DTO en su propio archivo
+- **Documentación XML**: Incluir documentación para DTOs públicos
+- **Propiedades primitivas**: Usar tipos primitivos (string, int, bool, etc.) en lugar de Value Objects
+- **Ejemplo**:
+```csharp
+// CreateCageRequest.cs
+/// <summary>
+/// Request para crear una jaula.
+/// </summary>
+public record CreateCageRequest(
+    string Id,
+    string Name,
+    string PlaylistId
+);
+
+// CreateCageResponse.cs
+/// <summary>
+/// Response de la creación de una jaula.
+/// </summary>
+public record CreateCageResponse(
+    string Id,
+    string Name,
+    string PlaylistId,
+    DateTime CreatedAt
+);
+```
 - Ejemplo:
 ```csharp
 public class ImportPresuncionDigimaxUseCase(
@@ -145,10 +243,11 @@ public class ImportPresuncionDigimaxUseCase(
 - Heredar de `DomainException` del SharedKernel
 - Incluir documentación XML completa
 - Implementar constructores con mensaje y excepción interna
-- Crear métodos estáticos `Create()` para casos específicos
+- **PATRÓN .Create**: Crear métodos estáticos `Create()` para casos específicos
 - Mensajes descriptivos en español
 - **Para Value Objects**: Crear excepciones específicas por cada tipo de validación
 - **Para reglas de negocio**: Crear excepciones específicas por cada regla
+- **Métodos Factory**: Usar métodos `Create*()` específicos para cada tipo de validación
 - Ejemplo para Value Object:
 ```csharp
 /// <summary>
@@ -179,6 +278,34 @@ public class InvalidDigimaxImageCountException : DomainException
     {
         return new InvalidDigimaxImageCountException(
             $"Los radares Digimax deben capturar exactamente {expectedCount} imágenes por presunción. Se encontraron {actualCount} imágenes.");
+    }
+}
+```
+
+- **Ejemplo de múltiples métodos Create** para diferentes tipos de validación:
+```csharp
+/// <summary>
+/// Excepción que se lanza cuando las imágenes de una presunción no cumplen con los requisitos.
+/// </summary>
+public sealed class InvalidPresuncionImagenesException : DomainException
+{
+    public InvalidPresuncionImagenesException(string message) : base(message) { }
+
+    public static InvalidPresuncionImagenesException CreateMinImages(int minImages, int actualCount)
+    {
+        return new InvalidPresuncionImagenesException(
+            $"Una presunción debe tener al menos {minImages} imagen. Se encontraron {actualCount} imágenes.");
+    }
+}
+```
+
+- **Uso en Value Objects**:
+```csharp
+private static void EnsureMinImages(IReadOnlyList<PresuncionImagenId> value)
+{
+    if (value.Count < MinImages)
+    {
+        throw InvalidPresuncionImagenesException.CreateMinImages(MinImages, value.Count);
     }
 }
 ```
@@ -256,7 +383,7 @@ public sealed record SongDrewFromCageEvent() : DomainEvent
 - **Siempre llamar al Use Case** correspondiente en el método `Consume()`
 - **Inyección directa del Use Case** en el constructor
 - **Extraer datos del evento** usando `context.Message.PropertyName`
-- **Nomenclatura simplificada**: `{Accion}On{Evento}` (ej: `ImportOnPresuncionDigimaxUploaded`, `DrawOnSongDrewFromCage`)
+- **Nomenclatura simplificada**: `{Accion}On{Evento}` (ej: `ImportOnPresuncionDigimaxUploaded`, `PickOnSongPickedFromCage`)
 - **Simplificar nombres de acciones**: Usar verbos simples como `Import`, `Store`, `Process`, `Check`
 - **Evitar verbos complejos**: Preferir `Import` en lugar de `ImportProcess`, `Store` en lugar de `StoreOperation`
 - **Documentación XML** completa para describir el propósito del handler
@@ -282,7 +409,7 @@ public class ImportOnPresuncionDigimaxUploaded(
 
 ### Nomenclatura de Acciones en Event Handlers
 - **Acciones básicas**: `Create`, `Update`, `Delete`
-- **Acciones de proceso**: `Import`, `Export`, `Process`, `Draw`
+- **Acciones de proceso**: `Import`, `Export`, `Process`, `Pick`
 - **Acciones de almacenamiento**: `Store`, `Save`, `Upload`
 - **Acciones de verificación**: `Check`, `Validate`, `Verify`
 - **Acciones de compresión**: `Compress`, `Decompress`
@@ -344,9 +471,57 @@ public class CheckPresuncionFilesUploadedWorker(
 
 ### Servicios de Dominio
 - Usar `sealed class` para servicios
-- Inyección de dependencias en el constructor
+- **Instanciación flexible**: Los servicios de dominio pueden instanciarse directamente o inyectarse según el caso
+- **Instanciación directa**: Preferible cuando son clases concretas con lógica pura de negocio sin dependencias externas
+- **Inyección de dependencias**: Útil cuando necesitas testear, mockear o cuando el servicio tiene dependencias complejas
 - Métodos asíncronos para operaciones I/O
 - Manejo de errores con try-catch
+- **Ejemplo con instanciación directa** (recomendado para servicios simples):
+```csharp
+public class PickRandomSongUseCase
+{
+    private readonly CageFinder _cageFinder = new CageFinder(cageRepository);
+    private readonly SongRandomizer _songRandomizer = new SongRandomizer(songRepository);
+}
+```
+- **Ejemplo con inyección** (útil para testing o servicios complejos):
+```csharp
+public class PickRandomSongUseCase(ICageFinder cageFinder, ISongRandomizer songRandomizer)
+{
+    private readonly ICageFinder _cageFinder = cageFinder;
+    private readonly ISongRandomizer _songRandomizer = songRandomizer;
+}
+```
+
+### Finders (Servicios de Búsqueda)
+- **Ubicación**: `Domain/{Modulo}/Services/`
+- **Nomenclatura**: `{Entidad}Finder` (ej: `CageFinder`, `PlaylistFinder`)
+- **Patrón consistente**: Todos los Finders siguen el mismo patrón
+- **Método principal**: `FindOrFail(Id)` que lanza excepción si no encuentra
+- **Instanciación directa**: Se instancian directamente en Use Cases
+- **Excepciones específicas**: Cada Finder lanza su excepción específica
+- **Ejemplo**:
+```csharp
+public class CageFinder(ICageRepository repository)
+{
+    private readonly ICageRepository _repository = repository;
+    
+    public async Task<Cage> FindOrFail(CageId id)
+    {
+        var cage = await _repository.Find(id);
+        EnsureCageExists(cage, id);
+        return cage!;
+    }
+
+    private void EnsureCageExists(Cage? cage, CageId id)
+    {
+        if (cage == null)
+        {
+            throw CageNotExistsException.CreateFromId(id.Value);
+        }
+    }   
+}
+```
 
 ## Configuración de Proyectos
 
@@ -378,6 +553,40 @@ public class CheckPresuncionFilesUploadedWorker(
 - **Value Objects**: Lanzar excepciones de dominio personalizadas, NO `ArgumentException`
 - **Reglas de negocio**: Lanzar excepciones de dominio personalizadas específicas
 - Crear excepciones específicas para cada tipo de validación (ej: `InvalidImagenNombreException`)
+
+### Proceso de Desarrollo Iterativo
+- **Empezar simple**: Implementar solo lo necesario para el caso de uso actual
+- **Revisar y simplificar**: Después de cada implementación, preguntarse "¿se puede simplificar?"
+- **Seguir patrones existentes**: Revisar código similar en el proyecto antes de crear algo nuevo
+- **Evitar "feature creep"**: No agregar funcionalidades "por si acaso"
+- **Refactoring continuo**: Simplificar código existente cuando se encuentre complejidad innecesaria
+- **Preguntas clave**:
+  - ¿Este código es realmente necesario?
+  - ¿Hay una forma más simple de hacer esto?
+  - ¿Sigue el patrón establecido en el proyecto?
+  - ¿Se puede reducir el número de líneas sin perder funcionalidad?
+
+### Organización de Carpetas y Reutilización
+- **ANTES de crear nueva carpeta**: Verificar si ya existe una carpeta similar
+- **Reutilizar estructura existente**: Agregar nuevos archivos a carpetas existentes cuando sea apropiado
+- **Consistencia de ubicación**: Mantener archivos relacionados en la misma carpeta
+- **Ejemplo CORRECTO**:
+  ```
+  RemoveDigimaxTempImages/
+  ├── RemoveDigimaxTempImagesUseCase.cs
+  ├── RemoveTempImagesOnDigimaxImagesStorageFailed.cs
+  └── RemoveTempImagesOnDigimaxImagesStored.cs  ← Agregar aquí, no crear nueva carpeta
+  ```
+- **Ejemplo INCORRECTO**:
+  ```
+  RemoveDigimaxTempImages/          ← Carpeta existente
+  ├── RemoveDigimaxTempImagesUseCase.cs
+  └── RemoveTempImagesOnDigimaxImagesStorageFailed.cs
+  
+  RemoveTempImages/                 ← ❌ NO crear nueva carpeta innecesaria
+  └── RemoveTempImagesOnDigimaxImagesStored.cs
+  ```
+- **Regla de oro**: Si ya existe una carpeta con funcionalidad similar, agregar el nuevo archivo ahí
 
 ### Manejo de Archivos
 - Usar `Stream` para manipulación de archivos
@@ -412,6 +621,31 @@ public class CheckPresuncionFilesUploadedWorker(
 - Incluir documentación XML para excepciones públicas
 - Comentar lógica de negocio compleja
 - Usar comentarios TODO para mejoras futuras
+
+### Código Limpio
+- **Eliminar comentarios obvios**: El código debe ser auto-documentado
+- **Nombres expresivos**: Variables y métodos deben explicarse por sí mismos
+- **Sin ruido visual**: Evitar comentarios que solo repiten lo que hace el código
+- **Principio**: "El código debe ser suficientemente expresivo para no necesitar comentarios obvios"
+- **Ejemplo INCORRECTO**:
+```csharp
+// 1. Validar que la playlist existe
+await _playlistFinder.FindOrFail(new PlaylistId(request.PlaylistId));
+
+// 2. Crear la jaula
+var cage = Cage.Create(...);
+
+// 3. Guardar en repositorio
+await _cageRepository.Create(cage);
+```
+- **Ejemplo CORRECTO**:
+```csharp
+await _playlistFinder.FindOrFail(new PlaylistId(request.PlaylistId));
+
+var cage = Cage.Create(...);
+
+await _cageRepository.Create(cage);
+```
 
 ### Performance
 - Usar `IAsyncEnumerable` para streams grandes de datos
@@ -499,3 +733,167 @@ Solution/
 - Incluir correlation IDs para rastrear operaciones
 - Logear eventos importantes del dominio
 - Implementar health checks para servicios externos
+
+## Patrones de Diseño Específicos
+
+### Criteria Pattern (Patrón de Criterios)
+- **Ubicación**: `Domain/{Modulo}/Criteria/`
+- **Herencia**: Heredar de `BaseCriteria` del SharedKernel
+- **Patrón Fluent**: Implementar métodos que retornen `this` para encadenamiento
+- **Inmutabilidad**: `BaseCriteria` debe ser mutable para patrón fluent eficiente
+- **Método Create()**: Agregar método estático `Create()` para instanciación limpia
+- **Ejemplo**:
+```csharp
+public class SongCriteria : BaseCriteria
+{
+    public static SongCriteria Create() => new SongCriteria();
+    
+    public SongCriteria WithPlaylistId(SongPlaylistId playlistId)
+    {
+        AddFilter(new Filter("PlaylistId", FilterOperators.EQ, playlistId.Value));
+        return this;
+    }
+    
+    public SongCriteria Exclude(IEnumerable<SongId> songIds)
+    {
+        AddFilter(new Filter("Id", FilterOperators.NOT_IN, songIds.Select(x => x.Value)));
+        return this;
+    }
+    
+    public SongCriteria Paginate(int page, int pageSize)
+    {
+        base.Paginate(page, pageSize);
+        return this;
+    }
+}
+```
+
+### Algoritmos de Selección Aleatoria
+- **Thread-Safe**: Usar `Random.Shared.Next()` en lugar de `new Random()`
+- **Eficiencia**: Obtener canciones disponibles primero, luego seleccionar aleatoriamente
+- **Validación**: Verificar que hay elementos disponibles antes de seleccionar
+- **Ejemplo CORRECTO**:
+```csharp
+public async Task<Song> GetRandomSongFromPlaylist(CageSongsDrawn alreadyDrawnSongs, CagePlaylistId playlistId)
+{
+    var criteria = new SongCriteria().Exclude(alreadyDrawnSongs.Value);
+    var totalSongs = await _songRepository.CountSongsFromPlaylist(playlistId, criteria);
+    var randomSongPosition = Random.Shared.Next(1, totalSongs + 1); // ✅ Thread-safe
+    
+    EnsurePlaylistHasRemainingSongs(totalSongs, playlistId);
+    
+    var songs = await _songRepository.GetSongsFromPlaylist(playlistId, criteria.Paginate(randomSongPosition, 1));
+    return songs.First();
+}
+```
+
+### Manejo de Dependencias en Use Cases
+- **Dependencias externas**: Inyectar interfaces (repositorios, servicios externos)
+- **Servicios de dominio**: Flexibilidad entre instanciación directa e inyección según necesidades
+- **Eliminar dependencias no utilizadas**: No inyectar servicios que no se usan
+- **Criterios para decidir**:
+  - **Instanciación directa**: Servicios simples, lógica pura de negocio, sin dependencias complejas
+  - **Inyección**: Necesidad de testing, mockeo, o servicios con dependencias complejas
+- **Ejemplo con instanciación directa**:
+```csharp
+public class PickRandomSongUseCase(
+    ICageRepository cageRepository,        // ✅ Interface - inyectar
+    ISongRepository songRepository,        // ✅ Interface - inyectar
+    IUnitOfWork unitOfWork,                // ✅ Interface - inyectar
+    IEventBus eventBus                     // ✅ Interface - inyectar
+)
+{
+    // ✅ Servicios de dominio - instanciar directamente (recomendado para casos simples)
+    private readonly CageFinder _cageFinder = new CageFinder(cageRepository);
+    private readonly SongRandomizer _songRandomizer = new SongRandomizer(songRepository);
+}
+```
+- **Ejemplo con inyección** (para casos complejos o testing):
+```csharp
+public class PickRandomSongUseCase(
+    ICageRepository cageRepository,
+    ISongRepository songRepository,
+    IUnitOfWork unitOfWork,
+    IEventBus eventBus,
+    ICageFinder cageFinder,                // ✅ Inyectar si necesitas testing/mockeo
+    ISongRandomizer songRandomizer         // ✅ Inyectar si necesitas testing/mockeo
+)
+```
+
+### Excepciones de Dominio Específicas
+- **Crear excepciones específicas**: No usar `InvalidOperationException` genérica
+- **Métodos factory**: Implementar métodos `Create()` con contexto específico
+- **Mensajes descriptivos**: Incluir información relevante en el mensaje
+- **Ejemplo**:
+```csharp
+public class EmptyPlaylistException : DomainException
+{
+    public EmptyPlaylistException(string message) : base(message) { }
+    
+    public static EmptyPlaylistException CreateFromPlaylistId(string playlistId)
+    {
+        return new EmptyPlaylistException($"La playlist {playlistId} no tiene canciones disponibles para extraer");
+    }
+}
+```
+
+### Validaciones en Value Objects
+- **Validación automática**: Los Value Objects validan en constructor y métodos de modificación
+- **No duplicar validaciones**: Si el Value Object ya valida, no validar en la entidad
+- **Ejemplo**:
+```csharp
+public sealed record CageSongsDrawn : ListValueObject<SongId>
+{
+    public CageSongsDrawn(List<SongId> Value) : base(Value)
+    {
+        EnsureNoDuplicatedSongs(); // ✅ Valida automáticamente
+    }
+    
+    public CageSongsDrawn Append(SongId songId)
+    {
+        return new CageSongsDrawn(Value.Append(songId).ToList()); // ✅ Valida automáticamente
+    }
+}
+
+// ❌ NO validar en la entidad si el Value Object ya valida
+public void PickSong(Song song)
+{
+    // if (DrawnSongs.Contains(song.Id)) // ❌ NO necesario - CageSongsDrawn ya valida
+    DrawnSongs = DrawnSongs.Append(song.Id); // ✅ Esto ya valida duplicados
+}
+```
+
+### Separación de Responsabilidades en Use Cases
+- **Patrón de dos métodos**: `Execute()` para infraestructura, método específico para lógica
+- **Execute()**: Maneja logging, try-catch, métricas, validaciones de infraestructura
+- **Método específico**: Maneja puramente la lógica de negocio
+- **Beneficios**:
+  - Separación clara de concerns
+  - Fácil testing de lógica de negocio
+  - Reutilización del método específico
+  - Manejo consistente de infraestructura
+- **Estructura recomendada**:
+```csharp
+public async Task<Entity> Execute(Request request)
+{
+    //TODO: try catch, logging, métricas
+    return await Create(request);
+}
+
+public async Task<Entity> Create(Request request)
+{
+    // Lógica pura de negocio
+    await _finder.FindOrFail(request.Id);
+    var entity = Entity.Create(...);
+    await _repository.Create(entity);
+    await _eventBus.Publish(entity.PullDomainEvents());
+    await _unitOfWork.SaveChangesAsync();
+    return entity;
+}
+```
+
+**CONSTRUCTORES DE ENTIDADES**: Los constructores de entidades deben ser públicos para permitir la creación sin disparar eventos automáticamente. Solo el método `Create` estático debe disparar eventos de creación.
+
+**CONSTRUCTORES CON PRIMITIVOS**: Los constructores y métodos `Create` de entidades deben recibir tipos primitivos (string, int, List<string>, etc.) y convertir internamente a Value Objects. NO recibir Value Objects directamente.
+
+**IMPORTACIONES OBLIGATORIAS**: Siempre agregar todas las importaciones necesarias (`using`) al crear archivos. Incluir: SharedKernel, excepciones de dominio, Value Objects, y cualquier dependencia requerida.

@@ -8,7 +8,6 @@ namespace Infracsoft.Importacion.Domain.Presunciones.Events.Failure;
 /// y eliminar imágenes subidas.
 /// </summary>
 public record PresuncionImportFailedEvent(
-    string? PresuncionId,
     string PresuncionSourcePath
 ) : DomainEvent
 {

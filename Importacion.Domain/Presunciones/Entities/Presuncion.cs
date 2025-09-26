@@ -1,8 +1,9 @@
-using System.Collections.Generic;
-using Infracsoft.Importacion.Domain.Presunciones.ValueObjects;
-using Infracsoft.Importacion.Domain.Presunciones.Events;
 using Infracsoft.Importacion.Domain.Imagenes.Entities;
+using Infracsoft.Importacion.Domain.Presunciones.Events;
+using Infracsoft.Importacion.Domain.Presunciones.ValueObjects;
 using SharedKernel.Domain.Entities;
+using System.Collections.Generic;
+using System.Runtime.Intrinsics.X86;
 
 namespace Infracsoft.Importacion.Domain.Presunciones.Entities;
 
@@ -12,14 +13,15 @@ public abstract class Presuncion : AggregateRoot
     public PresuncionFechaHora? FechaHora { get; protected set; }
     public PresuncionLugar? Lugar { get; protected set; }
     public PresuncionPatente? Patente { get; protected set; }
-    public ICollection<Imagen> Imagenes { get; private set; } = new List<Imagen>();
+    public PresuncionImagenes Imagenes { get; protected set; }
 
-    protected Presuncion(string id,string? lugar, string? patente = null, DateTime ? fechaHora = null)
+    protected Presuncion(string id, List<string> imagenes, string? lugar, string? patente = null, DateTime ? fechaHora = null)
     {
         Id = new PresuncionId(id);
         FechaHora = fechaHora != null ? new PresuncionFechaHora(fechaHora.Value) : null;
         Lugar = lugar != null ? new PresuncionLugar(lugar) : null;
         Patente = patente != null ? new PresuncionPatente(patente) : null;
+        Imagenes = new PresuncionImagenes(imagenes.Select(id => new PresuncionImagenId(id)).ToList());
     }
 
     public void Update(DateTime? fechaHora, string lugar, string patente)
@@ -30,10 +32,6 @@ public abstract class Presuncion : AggregateRoot
         //TODO: Update event
     }
 
-    public void AddImagen(Imagen imagen)
-    {
-        Imagenes.Add(imagen);
-    }
 
     public abstract void Delete();
 

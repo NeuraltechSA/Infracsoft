@@ -8,7 +8,7 @@ using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigi
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxTempFile;
 using Infracsoft.Importacion.Domain.Presunciones.Contracts;
 using Infracsoft.Importacion.Domain.Presunciones.Events;
-using Infracsoft.Importacion.Domain.Presunciones.Services;
+using Infracsoft.Importacion.Domain.Presunciones.Services.Digimax;
 using Infracsoft.Importacion.Infraestructure.Presunciones.Persistence.EFCore.Repositories;
 using Infracsoft.Importacion.Infraestructure.Presunciones.Services;
 using MassTransit;
@@ -27,7 +27,7 @@ namespace Infracsoft.Importacion.Worker.Presunciones
             #region  Contracts
             services.AddScoped<IGuidGenerator, GuidGenerator>();
             services.AddScoped<IPresuncionFileSource, SftpFileSource>();
-            services.AddScoped<IPresuncionTempStore, LocalTempStore>();
+            services.AddScoped<IPresuncionTempFileStore, LocalTempStore>();
             services.AddScoped<IPresuncionRepository, PresuncionRepository>();
             #endregion
 

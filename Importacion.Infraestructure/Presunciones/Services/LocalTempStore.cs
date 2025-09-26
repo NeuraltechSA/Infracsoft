@@ -11,7 +11,7 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure
     /// Implementación local de almacenamiento temporal para presunciones.
     /// Utiliza el sistema de archivos local para almacenar y recuperar archivos temporales.
     /// </summary>
-    public sealed class LocalTempStore : IPresuncionTempStore
+    public sealed class LocalTempStore : IPresuncionTempFileStore
     {
        
         private string _tempPath => Path.GetTempPath();

@@ -6,13 +6,13 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.Store
 {
     public class StoreDigimaxTempFileUseCase(
         IPresuncionFileSource fileSource, 
-        IPresuncionTempStore tempStore,
+        IPresuncionTempFileStore tempStore,
         IEventBus eventBus,
         IUnitOfWork unitOfWork
     )
     {
         private readonly IPresuncionFileSource _fileSource = fileSource;
-        private readonly IPresuncionTempStore _tempStore = tempStore;
+        private readonly IPresuncionTempFileStore _tempStore = tempStore;
         private readonly IEventBus _eventBus = eventBus;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         public async Task Execute(string compressedFileSourcePath)

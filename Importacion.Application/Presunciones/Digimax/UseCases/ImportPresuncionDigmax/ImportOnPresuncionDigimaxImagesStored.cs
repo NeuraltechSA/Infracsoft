@@ -6,12 +6,12 @@ namespace Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.Impor
 
 public class ImportOnPresuncionDigimaxImagesStored(
     ImportPresuncionDigimaxUseCase importPresuncionDigimaxUseCase
-) : IConsumer<PresuncionDigimaxImagesStoredEvent>
+) : IConsumer<DigimaxImagesStoredEvent>
 {
     private readonly ImportPresuncionDigimaxUseCase _importPresuncionDigimaxUseCase = importPresuncionDigimaxUseCase;
     
-    public async Task Consume(ConsumeContext<PresuncionDigimaxImagesStoredEvent> context)
+    public async Task Consume(ConsumeContext<DigimaxImagesStoredEvent> context)
     {
-        await _importPresuncionDigimaxUseCase.Execute(context.Message.CompressedFileSourcePath, context.Message.PresuncionId);
+        await _importPresuncionDigimaxUseCase.Execute(context.Message.ImageIds.ToList(), context.Message.CompressedFileSourcePath);
     }
 }

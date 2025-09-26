@@ -11,7 +11,7 @@ namespace Infracsoft.Importacion.Worker.Imagenes
         public static IServiceCollection UseImagenesModule(this IServiceCollection services)
         {
             #region  Services
-            services.AddScoped<ImagenStore>();
+            services.AddScoped<ImagenStorageService>();
             services.AddScoped<IImagenRepository, ImagenRepository>();
             services.AddScoped<IImagenStore, AzureBlobStore>();
             #endregion

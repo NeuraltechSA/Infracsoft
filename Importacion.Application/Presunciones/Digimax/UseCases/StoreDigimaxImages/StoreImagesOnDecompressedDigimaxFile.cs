@@ -13,9 +13,9 @@ public class StoreImagesOnDecompressedDigimaxFile(
     public async Task Consume(ConsumeContext<DecompressedDigimaxFileEvent> context)
     { 
         await _storeImportedDigimaxPresuncionImagesUseCase.Execute(
-            context.Message.TempFilePath,
+            context.Message.TempCompressedFilePath,
             context.Message.TempBasePath,
-            context.Message.OriginalSourcePath
+            context.Message.CompressedFileSourcePath
         );
     }
 }

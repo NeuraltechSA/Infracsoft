@@ -10,10 +10,10 @@ namespace Infracsoft.Importacion.Application.Imagenes.UseCases.DeleteImagen;
 /// Elimina la imagen del almacenamiento y de la base de datos.
 /// </summary>
 public class DeleteImagenUseCase(
-    ImagenStore store
+    ImagenStorageService store
 )
 {
-    private readonly ImagenStore _store = store;
+    private readonly ImagenStorageService _store = store;
 
     /// <summary>
     /// Ejecuta la eliminación de una imagen por su ID.

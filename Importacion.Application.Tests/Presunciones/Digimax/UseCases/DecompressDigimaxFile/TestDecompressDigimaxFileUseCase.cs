@@ -23,7 +23,7 @@ namespace Importacion.Application.Tests.Presunciones.Digimax.UseCases.Decompress
     {
         private DecompressDigimaxFileUseCase _useCase;
         private IDecompressor _decompressor;
-        private IPresuncionTempStore _tempStore;
+        private IPresuncionTempFileStore _tempStore;
         private IEventBus _eventBus;
         private IUnitOfWork _unitOfWork;
         private IConfiguration _configuration;
@@ -32,7 +32,7 @@ namespace Importacion.Application.Tests.Presunciones.Digimax.UseCases.Decompress
         public void Setup()
         {
             _decompressor = Substitute.For<IDecompressor>();
-            _tempStore = Substitute.For<IPresuncionTempStore>();
+            _tempStore = Substitute.For<IPresuncionTempFileStore>();
             _eventBus = Substitute.For<IEventBus>();
             _unitOfWork = Substitute.For<IUnitOfWork>();
             _configuration = Substitute.For<IConfiguration>();
