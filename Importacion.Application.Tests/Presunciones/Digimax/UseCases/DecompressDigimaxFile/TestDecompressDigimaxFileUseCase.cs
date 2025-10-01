@@ -111,6 +111,7 @@ namespace Importacion.Application.Tests.Presunciones.Digimax.UseCases.Decompress
                 await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
             });
             await _tempStore.DidNotReceive().Store(Arg.Any<string>(), Arg.Any<Stream>());
+            await _eventBus.DidNotReceive().Publish(Arg.Any<DecompressedDigimaxFileEvent>());
         }
 
         [Test]
@@ -138,6 +139,7 @@ namespace Importacion.Application.Tests.Presunciones.Digimax.UseCases.Decompress
                 await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
             });
             await _tempStore.DidNotReceive().Store(Arg.Any<string>(), Arg.Any<Stream>());
+            await _eventBus.DidNotReceive().Publish(Arg.Any<DecompressedDigimaxFileEvent>());
         }
 
         [Test]

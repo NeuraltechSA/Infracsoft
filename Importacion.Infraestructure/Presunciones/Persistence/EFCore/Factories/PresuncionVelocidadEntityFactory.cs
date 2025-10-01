@@ -18,6 +18,8 @@ internal sealed class PresuncionVelocidadEntityFactory
     {
         return new PresuncionVelocidad(
             model.Id.ToString(),
+            model.EquipoId.ToString(),
+            new List<string>(), // Las imágenes se cargan por separado
             model.ValorMedido!.Value,
             model.ValorMaximo!.Value,
             model.Carril,

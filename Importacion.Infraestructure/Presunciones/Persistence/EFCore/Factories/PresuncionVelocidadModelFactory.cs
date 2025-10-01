@@ -20,6 +20,7 @@ internal sealed class PresuncionVelocidadModelFactory
         return new PresuncionModel
         {
             Id = new Guid(entity.Id.Value),
+            EquipoId = new Guid(entity.EquipoId.Value),
             FechaHora = entity.FechaHora?.Value,
             Lugar = entity.Lugar?.Value,
             Patente = entity.Patente?.Value,

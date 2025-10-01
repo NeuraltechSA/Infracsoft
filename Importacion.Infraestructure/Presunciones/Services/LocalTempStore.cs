@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure
+namespace Infracsoft.Importacion.Infraestructure.Presunciones.Services
 {
     /// <summary>
     /// Implementación local de almacenamiento temporal para presunciones.

@@ -75,10 +75,20 @@ alwaysApply: false
 - **Entidades**: PascalCase (ej: `PresuncionVelocidad`, `Imagen`)
 - **Value Objects**: PascalCase con sufijo descriptivo (ej: `PresuncionId`, `ImagenNombre`)
 - **Interfaces**: Prefijo "I" + PascalCase (ej: `IPresuncionRepository`, `IImagenStore`)
+- **Repositorios**: Heredar de `IRepository<TEntity, TId, TCriteria>` del SharedKernel (ej: `public interface IEquipoRepository : IRepository<Equipo, EquipoId, EquipoCriteria>`)
 - **Use Cases**: PascalCase + sufijo "UseCase" (ej: `ImportPresuncionDigimaxUseCase`)
 - **Eventos**: PascalCase + sufijo "Event" (ej: `ImagenCreatedDomainEvent`)
 - **Excepciones**: PascalCase + sufijo "Exception" (ej: `InvalidDigimaxImageCountException`)
 - **Servicios**: PascalCase + sufijo descriptivo (ej: `ImagenStore`, `PresuncionFinder`)
+
+### Constructores
+- **Usar constructores principales**: Preferir `public class MyClass(ParamType param)` sobre constructores tradicionales
+- **Ejemplo**: `public class DigimaxDataExtractor(EquipoPathExtractor equipoExtractor)` en lugar de constructor con cuerpo
+
+### Early Return y Validaciones
+- **Favorecer early return**: Usar excepciones para early return en lugar de if/else anidados
+- **Llamar directamente a validadores**: `await _validator.EnsureSomething()` en lugar de try/catch innecesario
+- **Ejemplo**: `await _duplicateValidator.EnsureNoDuplicate(...)` en lugar de `if (isDuplicate) return;`
 
 ### Value Objects
 - Heredar de `StringValueObject`, `UuidValueObject`, `FloatValueObject`, etc. del SharedKernel
@@ -90,6 +100,7 @@ alwaysApply: false
 - **Nomenclatura**: `{Entidad}{Concepto}` (ej: `SongId`, `SongName`, `SongPlaylistId` en lugar de `PlaylistId`)
 - **Cuándo aplicar**: Cuando el Value Object representa un concepto específico de una entidad
 - **Cuándo NO aplicar**: Cuando el Value Object es genérico y se reutiliza entre múltiples entidades (ej: `Email`, `Money`, `Address`)
+- **REFERENCIAS ENTRE MÓDULOS**: Para referencias a otras entidades, usar prefijo de la entidad actual (ej: `EquipoUnidadProduccionId` en lugar de `UnidadProduccionId` en el módulo Equipos)
 
 - **Ejemplo INCORRECTO** (sin prefijo de entidad):
 ```csharp
@@ -183,6 +194,7 @@ public async Task<Entity> Create(Request request)
 
 ### DTOs (Data Transfer Objects)
 - **Ubicación**: En la misma carpeta del Use Case que los utiliza
+- **DTOs de Dominio**: Para DTOs que se usan entre servicios de dominio, ubicar en `Domain/{Modulo}/DTO/` (no DTOs)
 - **Nomenclatura**: `{UseCase}Request`, `{UseCase}Response`, `{Entidad}DTO`
 - **Inmutabilidad**: Usar `record` para DTOs inmutables
 - **Un archivo por DTO**: Separar cada DTO en su propio archivo

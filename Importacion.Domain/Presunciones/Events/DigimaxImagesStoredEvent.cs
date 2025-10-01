@@ -3,7 +3,7 @@ using SharedKernel.Domain.Contracts;
 namespace Infracsoft.Importacion.Domain.Presunciones.Events;
 
 public record DigimaxImagesStoredEvent(
-    IEnumerable<string> ImageIds,
+    IEnumerable<string> ImagenesIds,
     string CompressedFileSourcePath,
     string CompressedFileTempPath,
     string TempBasePath

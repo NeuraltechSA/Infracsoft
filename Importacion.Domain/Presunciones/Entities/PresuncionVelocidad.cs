@@ -18,13 +18,14 @@ public sealed class PresuncionVelocidad : Presuncion
 
     public PresuncionVelocidad(
         string id,
+        string equipoId,
         List<string> imagenes,
         float velocidadMedida,
         float velocidadMaxima,
         int? carril,
         DateTime? fechaHora,
         string? lugar,
-        string? patente) : base(id, imagenes, lugar, patente, fechaHora)
+        string? patente) : base(id, equipoId, imagenes, lugar, patente, fechaHora)
     {
         VelocidadMaxima = new PresuncionVelocidadMaxima(velocidadMaxima);
         VelocidadMedida = new PresuncionVelocidadMedida(velocidadMedida, velocidadMaxima);
@@ -33,6 +34,7 @@ public sealed class PresuncionVelocidad : Presuncion
 
     public static PresuncionVelocidad Create(
         string id,
+        string equipoId,
         List<string> imagenes,
         float velocidadMedida,
         float velocidadMaxima,
@@ -42,11 +44,12 @@ public sealed class PresuncionVelocidad : Presuncion
         string? patente
     )
     {
-        var presuncion = new PresuncionVelocidad(id, imagenes, velocidadMedida, velocidadMaxima, carril, fechaHora, lugar, patente);
+        var presuncion = new PresuncionVelocidad(id, equipoId, imagenes, velocidadMedida, velocidadMaxima, carril, fechaHora, lugar, patente);
         presuncion.RecordDomainEvent(
             new PresuncionVelocidadCreatedDomainEvent
             {
                 PresuncionId = id,
+                EquipoId = equipoId,
                 FechaHora = fechaHora,
                 Lugar = lugar,
                 Patente = patente,
@@ -74,6 +77,7 @@ public sealed class PresuncionVelocidad : Presuncion
             new PresuncionVelocidadUpdatedDomainEvent
             {
                 PresuncionId = Id.Value,
+                EquipoId = EquipoId.Value,
                 FechaHora = fechaHora,
                 Lugar = lugar,
                 Patente = patente,
@@ -83,20 +87,21 @@ public sealed class PresuncionVelocidad : Presuncion
             });
     }
 
-    public static PresuncionVelocidad ImportFromDigimax(string id, List<string> imagenes, string compressedFileSourcePath)
+    public static PresuncionVelocidad ImportFromDigimax(string id, string equipoId, List<string> imagenesIds, string compressedFileSourcePath)
     {
-            EnsureValidDigimaxImageCount(imagenes);
+            EnsureValidDigimaxImageCount(imagenesIds);
             var match = EnsureValidDigimaxFilename(Path.GetFileName(compressedFileSourcePath));
             var lugar = match.Groups["lugar"].Value;
             var fecha = DateTime.ParseExact($"{match.Groups["fecha"].Value} {match.Groups["hora"].Value}", "dd-MM-yyyy HH.mm.ss", CultureInfo.InvariantCulture);
             var maxima = float.Parse(match.Groups["maxima"].Value);
             var medida = float.Parse(match.Groups["medida"].Value);            
-            var presuncion = new PresuncionVelocidad(id, imagenes, medida, maxima, null, fecha, lugar, null);
+            var presuncion = new PresuncionVelocidad(id, equipoId, imagenesIds, medida, maxima, null, fecha, lugar, null);
             
             presuncion.RecordDomainEvent(
                 new PresuncionDigimaxImportedEvent
                 {
                     PresuncionId = id,
+                    EquipoId = equipoId,
                     CompressedFileSourcePath = compressedFileSourcePath,
                     FechaHora = fecha,
                     Lugar = lugar,
@@ -135,6 +140,7 @@ public sealed class PresuncionVelocidad : Presuncion
             new PresuncionVelocidadDeletedDomainEvent
             {
                 PresuncionId = Id.Value,
+                EquipoId = EquipoId.Value,
                 FechaHora = FechaHora?.Value,
                 Lugar = Lugar?.Value,
                 Patente = Patente?.Value,

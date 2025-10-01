@@ -21,7 +21,7 @@ namespace SharedKernel.Infraestructure.Persistence.EFCore.Repositories
         where TEntity : Entity
         where TId : ValueObject<string>
         where TModel : BaseEFCoreModel
-        where TCriteria : BaseCriteria
+        where TCriteria : BaseCriteria<TCriteria>
     {
         /// <summary>
         /// Contexto de Entity Framework Core

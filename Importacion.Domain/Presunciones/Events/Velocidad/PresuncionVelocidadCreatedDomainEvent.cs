@@ -6,6 +6,7 @@ public sealed record PresuncionVelocidadCreatedDomainEvent(
 ) : DomainEvent
 {
     public required string PresuncionId { get; init; }
+    public required string EquipoId { get; init; }
     public required DateTime? FechaHora { get; init; }
     public required string? Lugar { get; init; }
     public required string? Patente { get; init; }

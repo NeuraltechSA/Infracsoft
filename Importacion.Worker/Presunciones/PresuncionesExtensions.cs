@@ -1,14 +1,11 @@
-﻿using Infracsoft.Importacion.Application.Presunciones.Digimax.Infrastructure;
-using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.CheckSourceDigimax;
+﻿using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.CheckSourceDigimax;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.DecompressDigimaxTempFile;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.ImportPresuncionDigmax;
-using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.RemoveDigimaxTempFile;
-using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.RemoveDigimaxTempImages;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxImages;
 using Infracsoft.Importacion.Application.Presunciones.Digimax.UseCases.StoreDigimaxTempFile;
+using Infracsoft.Importacion.Application.Presunciones.UseCases.CleanTempPath;
+using Infracsoft.Importacion.Application.Presunciones.UseCases.RemoveTempFile;
 using Infracsoft.Importacion.Domain.Presunciones.Contracts;
-using Infracsoft.Importacion.Domain.Presunciones.Events;
-using Infracsoft.Importacion.Domain.Presunciones.Services.Digimax;
 using Infracsoft.Importacion.Infraestructure.Presunciones.Persistence.EFCore.Repositories;
 using Infracsoft.Importacion.Infraestructure.Presunciones.Services;
 using MassTransit;
@@ -37,12 +34,12 @@ namespace Infracsoft.Importacion.Worker.Presunciones
             services.AddScoped<StoreDigimaxTempFileUseCase>();
             services.AddScoped<DecompressDigimaxFileUseCase>();
             services.AddScoped<StoreDigimaxImagesUseCase>();
-            services.AddScoped<RemoveDigimaxTempFileUseCase>();
-            services.AddScoped<RemoveDigimaxTempImagesUseCase>();
+            services.AddScoped<RemoveTempFileUseCase>();
+            services.AddScoped<CleanTempPathUseCase>();
             #endregion
 
             #region Services
-            services.AddScoped<PresuncionDigimaxImagenStore>();
+
             #endregion
 
             #region Consumers
@@ -55,7 +52,6 @@ namespace Infracsoft.Importacion.Worker.Presunciones
                 
                 x.AddConsumer<RemoveTempFileOnDigimaxDecompressionFailed>();
                 x.AddConsumer<RemoveTempFileOnDigimaxImagesStorageFailed>();
-                x.AddConsumer<RemoveTempImagesOnDigimaxImagesStorageFailed>();
             });
             #endregion
 

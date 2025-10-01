@@ -42,118 +42,44 @@ namespace Importacion.Application.Tests.Presunciones.Digimax.UseCases.StoreDigim
         [Test]
         public async Task StoreImages_WithValidImages_UploadsImagesAndPublishesEvents()
         {
-            //Arrange
+            //Arrange 
             var sourceCompressedFilePath = PresuncionDigimaxSourcePathMother.Create();
+            var tempCompressedFilePath = Path.GetFileName(sourceCompressedFilePath);
             var tempBasePath = Path.GetFileNameWithoutExtension(sourceCompressedFilePath);
-            var expectedFilename = Path.GetFileName(sourceCompressedFilePath);
-            var tempFilePaths = new[] { "A.png" };
-            var imageId = new Guid("d68f563d-7b5d-4296-b08d-091cd49f823f");
 
-            _presuncionTempFileStore.GetFilePathsFromFolder(tempBasePath).Returns(tempFilePaths);
-            _guidGenerator.GenerateGuid().Returns(imageId);
+            var tempImage1Path = Path.Join(tempBasePath, "1.BMP");
+            var tempImage2Path = Path.Join(tempBasePath, "2.BMP");
+            var image1Id = Guid.NewGuid();
+            var image2Id = Guid.NewGuid();
+            var stream1 = Substitute.For<Stream>();
+            var stream2 = Substitute.For<Stream>();
+         
+            _presuncionTempFileStore.GetFilePathsFromFolder(tempBasePath).Returns([tempImage1Path, tempImage2Path]);
+            _presuncionTempFileStore.DownloadFile(tempImage1Path).Returns(stream1);
+            _presuncionTempFileStore.DownloadFile(tempImage2Path).Returns(stream2);
 
-            //Act
+            _guidGenerator.GenerateGuid().Returns(image1Id, image2Id);
 
-
-            //Assert
-            foreach (var filePath in tempFilePaths) { 
-                var stream = await _presuncionTempFileStore.Received(1).DownloadFile(filePath);
-                await _imagenStorageService.Received(1).Upload(imageId.ToString(), expectedFilename, stream);
-            }
-
-        }
-        /*
-        [Test]
-        public async Task StoreImages_WithValidImages_PublishesSuccessEvent()
-        {
-            //Arrange
-            var tempFilePath = "0123DIGIMAX.zip";
-            var tempBasePath = "0123DIGIMAX";
-            var originalSourcePath = "source/0123DIGIMAX.zip";
-            var presuncionId = "presuncion-123";
-
-            _presuncionDigimaxImagenStore.StoreImages(tempBasePath, string.Empty)
-                .Returns(presuncionId);
 
             //Act
-            await _useCase.Execute(tempFilePath, tempBasePath, originalSourcePath);
+            await _useCase.Execute(tempCompressedFilePath, tempBasePath, sourceCompressedFilePath);
+
 
             //Assert
             Received.InOrder(async () =>
             {
-                await _presuncionDigimaxImagenStore.Received(1).StoreImages(tempBasePath, string.Empty);
-                await _eventBus.Received(1).Publish(new PresuncionDigimaxImagesStoredEvent(presuncionId, originalSourcePath));
-                await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+                await _imagenStorageService.Received(1).Upload(image1Id.ToString(), Path.GetFileName(tempImage1Path), stream1);
+                await _imagenStorageService.Received(1).Upload(image2Id.ToString(), Path.GetFileName(tempImage2Path), stream2);
+                await _eventBus.Received(1).Publish(Arg.Is<DigimaxImagesStoredEvent>(x =>
+                    x.CompressedFileSourcePath == sourceCompressedFilePath &&
+                    x.CompressedFileTempPath == tempCompressedFilePath &&
+                    x.TempBasePath == tempBasePath &&
+                    x.ImagenesIds.SequenceEqual(new List<string>() { image1Id.ToString(), image2Id.ToString() })
+                ));
+                await _unitOfWork.SaveChangesAsync();
             });
+            await _eventBus.DidNotReceive().Publish(Arg.Any<DigimaxImagesStorageFailedEvent>());
+
         }
-
-        [Test]
-        public async Task StoreImages_WhenStoreImagesFails_PublishesFailureEvent()
-        {
-            //Arrange
-            var tempFilePath = "0123DIGIMAX.zip";
-            var tempBasePath = "0123DIGIMAX";
-            var originalSourcePath = "source/0123DIGIMAX.zip";
-
-            _presuncionDigimaxImagenStore.StoreImages(tempBasePath, string.Empty)
-                .Throws(new InvalidOperationException("Invalid image count"));
-
-            //Act
-            await _useCase.Execute(tempFilePath, tempBasePath, originalSourcePath);
-
-            //Assert
-            Received.InOrder(async () =>
-            {
-                await _presuncionDigimaxImagenStore.Received(1).StoreImages(tempBasePath, string.Empty);
-                await _eventBus.Received(1).Publish(new DigimaxImagesStorageFailedEvent(tempBasePath, tempFilePath));
-                await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-            });
-        }
-
-        [Test]
-        public async Task StoreImages_WhenTempStoreFails_PublishesFailureEvent()
-        {
-            //Arrange
-            var tempFilePath = "0123DIGIMAX.zip";
-            var tempBasePath = "0123DIGIMAX";
-            var originalSourcePath = "source/0123DIGIMAX.zip";
-
-            _presuncionDigimaxImagenStore.StoreImages(tempBasePath, string.Empty)
-                .Throws(new FileNotFoundException("Temp files not found"));
-
-            //Act
-            await _useCase.Execute(tempFilePath, tempBasePath, originalSourcePath);
-
-            //Assert
-            Received.InOrder(async () =>
-            {
-                await _presuncionDigimaxImagenStore.Received(1).StoreImages(tempBasePath, string.Empty);
-                await _eventBus.Received(1).Publish(new DigimaxImagesStorageFailedEvent(tempBasePath, tempFilePath));
-                await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-            });
-        }
-
-        [Test]
-        public async Task StoreImages_WhenImagenStoreFails_PublishesFailureEvent()
-        {
-            //Arrange
-            var tempFilePath = "0123DIGIMAX.zip";
-            var tempBasePath = "0123DIGIMAX";
-            var originalSourcePath = "source/0123DIGIMAX.zip";
-
-            _presuncionDigimaxImagenStore.StoreImages(tempBasePath, string.Empty)
-                .Throws(new IOException("Storage failed"));
-
-            //Act
-            await _useCase.Execute(tempFilePath, tempBasePath, originalSourcePath);
-
-            //Assert
-            Received.InOrder(async () =>
-            {
-                await _presuncionDigimaxImagenStore.Received(1).StoreImages(tempBasePath, string.Empty);
-                await _eventBus.Received(1).Publish(new DigimaxImagesStorageFailedEvent(tempBasePath, tempFilePath));
-                await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-            });
-        }*/
     }
 }

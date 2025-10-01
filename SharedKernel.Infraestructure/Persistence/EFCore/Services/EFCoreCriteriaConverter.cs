@@ -31,7 +31,7 @@ public class EFCoreCriteriaConverter
         return string.Join(", ", orders.Select(order => $"{order.GetOrderBy()} {(order.GetOrderType() == OrderTypes.ASC ? "asc" : "desc")}"));
     }
 
-    private IQueryable<TModel> ApplyFilters<TModel>(BaseCriteria criteria, IQueryable<TModel> query)
+    private IQueryable<TModel> ApplyFilters<TModel,TCriteria>(TCriteria criteria, IQueryable<TModel> query) where TCriteria : BaseCriteria<TCriteria>
     {
         foreach (var filter in criteria.GetFilters())
         {
@@ -40,13 +40,13 @@ public class EFCoreCriteriaConverter
         return query;
     }
 
-    private IQueryable<TModel> ApplyOrders<TModel>(BaseCriteria criteria, IQueryable<TModel> query)
+    private IQueryable<TModel> ApplyOrders<TModel, TCriteria>(TCriteria criteria, IQueryable<TModel> query) where TCriteria : BaseCriteria<TCriteria>
     {
         query = query.OrderBy(ParseOrders(criteria.GetOrders()));
         return query;
     }
 
-    private IQueryable<TModel> ApplyPagination<TModel>(BaseCriteria criteria, IQueryable<TModel> query)
+    private IQueryable<TModel> ApplyPagination<TModel, TCriteria>(TCriteria criteria, IQueryable<TModel> query) where TCriteria : BaseCriteria<TCriteria>
     {
         if (!criteria.HasPagination) return query;
         
@@ -57,7 +57,7 @@ public class EFCoreCriteriaConverter
     }
 
 
-    public IQueryable<TModel> Apply<TModel>(BaseCriteria criteria, IQueryable<TModel> query)
+    public IQueryable<TModel> Apply<TModel, TCriteria>(TCriteria criteria, IQueryable<TModel> query) where TCriteria : BaseCriteria<TCriteria>
     {
         query = ApplyFilters(criteria, query);
         query = ApplyOrders(criteria, query);

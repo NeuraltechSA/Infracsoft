@@ -12,6 +12,6 @@ public class ImportOnPresuncionDigimaxImagesStored(
     
     public async Task Consume(ConsumeContext<DigimaxImagesStoredEvent> context)
     {
-        await _importPresuncionDigimaxUseCase.Execute(context.Message.ImageIds.ToList(), context.Message.CompressedFileSourcePath);
+        await _importPresuncionDigimaxUseCase.Execute(context.Message.ImagenesIds.ToList(), context.Message.CompressedFileSourcePath);
     }
 }

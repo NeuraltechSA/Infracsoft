@@ -4,6 +4,8 @@ using SharedKernel.Domain.Contracts;
 using MassTransit;
 using SharedKernel.Infraestructure.Persistence.EFCore.Services;
 using Infracsoft.Importacion.Infraestructure.Imagenes.Persistence.EFCore.Models;
+using Infracsoft.Importacion.Infraestructure.Equipos.Persistence.EFCore.Models;
+using Infracsoft.Importacion.Infraestructure.UnidadesProduccion.Persistence.EFCore.Models;
 
 
 namespace Infracsoft.Importacion.Infraestructure.SharedKernel.Persistence.EFCore.Contexts;
@@ -12,6 +14,8 @@ public class ImportacionDbContext : DbContext, IUnitOfWork
 {
     public DbSet<PresuncionModel> Presunciones { get; set; }
     public DbSet<ImagenModel> Imagenes { get; set; }
+    public DbSet<EquipoModel> Equipos { get; set; }
+    public DbSet<UnidadProduccionModel> UnidadesProduccion { get; set; }
 
     public ImportacionDbContext(DbContextOptions<ImportacionDbContext> options) : base(options)
     {

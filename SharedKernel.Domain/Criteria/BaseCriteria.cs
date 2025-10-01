@@ -5,7 +5,7 @@ using SharedKernel.Domain.Criteria.Order;
 
 namespace SharedKernel.Domain.Criteria;
 
-public class BaseCriteria
+public class BaseCriteria<T> where T : BaseCriteria<T>
 {
     protected Filters Filters { get; private set; }
     protected Orders Orders { get; private set; }
@@ -18,24 +18,24 @@ public class BaseCriteria
         Pagination = pagination;
     }
 
-    public BaseCriteria AddFilter(Filter.Filter newFilter)
+    public T AddFilter(Filter.Filter newFilter)
     {
         var newFilters = new List<Filter.Filter>(Filters.Value) { newFilter };
         Filters = new Filters(newFilters);
-        return this;
+        return (T)this;
     }
 
-    public BaseCriteria AddOrder(Order.Order newOrder)
+    public T AddOrder(Order.Order newOrder)
     {
         var newOrders = new List<Order.Order>(Orders.Value) { newOrder };
         Orders = new Orders(newOrders);
-        return this;
+        return (T)this;
     }
 
-    public BaseCriteria Paginate(int page, int pageSize)
+    public T Paginate(int page, int pageSize)
     {
         Pagination = new Pagination(page, pageSize);
-        return this;
+        return (T)this;
     }
 
     public List<Filter.Filter> GetFilters() => Filters.Value;
